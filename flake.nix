@@ -34,7 +34,6 @@
             diffutils
             gnutar
             nixos-rebuild
-            sudo
           ];
           text = builtins.readFile ./bin/apply-dev-vm;
         }}/bin/apply-dev-vm";

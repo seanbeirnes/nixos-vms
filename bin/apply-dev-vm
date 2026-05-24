@@ -64,6 +64,8 @@ rebuild=(nixos-rebuild switch --flake "$tmp_source#$host")
 
 if [ "${EUID:-$(id -u)}" -eq 0 ]; then
   "${rebuild[@]}" "$@"
+elif [ -x /run/wrappers/bin/sudo ]; then
+  /run/wrappers/bin/sudo "${rebuild[@]}" "$@"
 else
   sudo "${rebuild[@]}" "$@"
 fi
