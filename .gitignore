@@ -45,3 +45,6 @@ Temporary Items
 ### macOS Patch ###
 # iCloud generated files
 *.icloud
+
+# Local machine-generated NixOS hardware config
+hosts/*/hardware-configuration.nix
