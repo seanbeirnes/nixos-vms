@@ -8,7 +8,10 @@
 
   networking.hostName = "dev-vm";
   networking.nameservers = [ "192.168.1.1" ];
-  networking.networkmanager.enable = true;
+  networking.networkmanager = {
+    enable = true;
+    insertNameservers = [ "192.168.1.1" ];
+  };
 
   nix.settings = {
     experimental-features = [
