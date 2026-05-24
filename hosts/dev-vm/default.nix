@@ -3,6 +3,9 @@
     ./hardware-configuration.nix
   ];
 
+  boot.loader.systemd-boot.enable = true;
+  boot.loader.efi.canTouchEfiVariables = true;
+
   networking.hostName = "dev-vm";
   networking.nameservers = [ "192.168.1.1" ];
   networking.networkmanager.enable = true;
