@@ -58,8 +58,7 @@
     ghostty
     go
     google-chrome
-    google-chrome-beta
-    google-chrome-dev
+    chromium
     httpie
     jq
     just
