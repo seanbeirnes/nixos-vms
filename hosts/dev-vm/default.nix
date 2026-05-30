@@ -12,6 +12,7 @@
     enable = true;
     insertNameservers = [ "192.168.1.1" ];
   };
+  networking.firewall.allowedTCPPorts = [ 8080 ];
 
   nix.settings = {
     experimental-features = [
