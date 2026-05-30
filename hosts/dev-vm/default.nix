@@ -21,6 +21,8 @@
     trusted-users = [ username ];
   };
 
+  nixpkgs.config.allowUnfree = true;
+
   programs.dconf.enable = true;
   programs.zsh.enable = true;
 
@@ -49,10 +51,14 @@
     bat
     eza
     fd
+    firefox
     fzf
     gcc
     ghostty
     go
+    google-chrome
+    google-chrome-beta
+    google-chrome-dev
     httpie
     jq
     just
