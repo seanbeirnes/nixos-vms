@@ -50,6 +50,7 @@
     eza
     fd
     fzf
+    gcc
     ghostty
     go
     httpie
@@ -57,6 +58,7 @@
     just
     lazygit
     lua
+    gnumake
     neovim
     nodejs
     opencode
