@@ -7,9 +7,6 @@ in
     idle-delay = lib.hm.gvariant.mkUint32 0;
   };
 
-  dconf.settings."org/gnome/mutter" = {
-    overlay-key = "F4";
-  };
 
   dconf.settings."org/gnome/shell/keybindings" = {
     switch-to-application-1 = disabledShortcut;

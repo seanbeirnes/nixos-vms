@@ -14,6 +14,9 @@
     };
 
     initContent = ''
+      bindkey '^[b' backward-word
+      bindkey '^[f' forward-word
+
       g() {
         local target
         target="$(goto "$@")" || return
