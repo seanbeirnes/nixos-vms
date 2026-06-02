@@ -24,6 +24,20 @@
     (import ./scripts/goto.nix { inherit pkgs; })
     (import ./scripts/nvim-sync.nix { inherit pkgs; })
     (import ./scripts/tnew.nix { inherit pkgs; })
+    (pkgs.writeShellApplication {
+      name = "pbcopy";
+      runtimeInputs = [ pkgs.wl-clipboard ];
+      text = ''
+        wl-copy "$@"
+      '';
+    })
+    (pkgs.writeShellApplication {
+      name = "pbpaste";
+      runtimeInputs = [ pkgs.wl-clipboard ];
+      text = ''
+        wl-paste "$@"
+      '';
+    })
   ];
 
   programs.home-manager.enable = true;

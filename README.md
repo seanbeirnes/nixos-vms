@@ -102,7 +102,7 @@ Recommended host-side mappings:
 
 | macOS Shortcut | Linux Guest Shortcut | Purpose |
 | --- | --- | --- |
-| `Cmd+W` | `Alt+F4` | Close the active window |
+| `Cmd+Q` | `Alt+F4` | Close the active window |
 | `Cmd+Left` | `Home` | Move to beginning of line |
 | `Cmd+Right` | `End` | Move to end of line |
 | `Cmd+Backspace` | `Ctrl+U` | Delete line |
