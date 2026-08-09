@@ -76,6 +76,18 @@ When using `nix run`, pass script arguments after `--`:
 nix run .#apply-dev-vm -- --show-trace
 ```
 
+## Railway CLI Setup
+
+The Railway CLI is installed separately from NixOS so it can follow Railway's current releases instead of the version packaged in Nixpkgs. The Home Manager configuration includes `~/.railway/bin` in `PATH`.
+
+After applying the VM configuration and opening a new shell, follow Railway's CLI installation instructions:
+
+```sh
+bash <(curl -fsSL railway.com/install.sh)
+```
+
+Other information can be found in [Railway's CLI docs](https://docs.railway.com/cli).
+
 ## Local Hardware Config
 
 `hosts/dev-vm/hardware-configuration.nix` is intentionally ignored by git.

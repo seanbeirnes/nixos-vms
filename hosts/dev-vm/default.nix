@@ -33,6 +33,7 @@
     extraGroups = [
       "wheel"
       "networkmanager"
+      "docker"
     ];
     shell = pkgs.zsh;
   };
@@ -46,32 +47,37 @@
   services.displayManager.gdm.enable = true;
   services.desktopManager.gnome.enable = true;
 
+  virtualisation.docker.enable = true;
   virtualisation.vmware.guest.enable = true;
 
   environment.systemPackages = with pkgs; [
     bat
+    chromium
+    docker-compose
     eza
     fd
     firefox
     fzf
     gcc
+    gh
     ghostty
     go
+    gnumake
     google-chrome
-    chromium
     httpie
     jq
     just
     lazygit
     lua
-    gnumake
     neovim
     nodejs
     opencode
+    pnpm
     process-compose
     ripgrep
     tmux
     tree-sitter
+    vscode
     zoxide
   ];
 
