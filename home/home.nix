@@ -18,6 +18,7 @@
     "/run/current-system/sw/bin"
     "$HOME/.nix-profile/bin"
     "/etc/profiles/per-user/${username}/bin"
+    "$HOME/.railway/bin"
   ];
 
   home.packages = [

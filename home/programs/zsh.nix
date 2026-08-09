@@ -14,6 +14,10 @@
     };
 
     initContent = ''
+      if [ -f "$HOME/.railway/env" ]; then
+        source "$HOME/.railway/env"
+      fi
+
       bindkey '^[b' backward-word
       bindkey '^[f' forward-word
 
