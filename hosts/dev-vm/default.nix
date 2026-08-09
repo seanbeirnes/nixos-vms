@@ -47,13 +47,15 @@
   services.displayManager.gdm.enable = true;
   services.desktopManager.gnome.enable = true;
 
-  virtualisation.docker.enable = true;
+  virtualisation.docker = {
+    enable = true;
+    package = pkgs.docker_29;
+  };
   virtualisation.vmware.guest.enable = true;
 
   environment.systemPackages = with pkgs; [
     bat
     chromium
-    docker-compose
     eza
     fd
     firefox
