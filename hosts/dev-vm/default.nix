@@ -65,7 +65,6 @@
     ghostty
     go
     gnumake
-    google-chrome
     httpie
     jq
     just
