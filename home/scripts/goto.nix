@@ -1,60 +1,121 @@
 { pkgs }:
+let
+  inherit (pkgs.lib) concatMapStringsSep concatStringsSep escapeShellArg;
+
+  shortcuts = [
+    {
+      names = [
+        "dl"
+        "downloads"
+      ];
+      destination = "$HOME/Downloads";
+      description = "Downloads directory";
+    }
+    {
+      names = [ "docs" ];
+      destination = "$HOME/Documents";
+      description = "Documents directory";
+    }
+    {
+      names = [
+        "dsktp"
+        "desk"
+        "desktop"
+      ];
+      destination = "$HOME/Desktop";
+      description = "Desktop directory";
+    }
+    {
+      names = [ "repos" ];
+      destination = "$HOME/Desktop/repos";
+      description = "Repositories directory";
+    }
+    {
+      names = [
+        "cfg"
+        "config"
+      ];
+      destination = "\${XDG_CONFIG_HOME:-$HOME/.config}";
+      description = "Configuration directory";
+    }
+    {
+      names = [ "home" ];
+      destination = "$HOME";
+      description = "Home directory";
+    }
+  ];
+
+  shortcutCases = concatMapStringsSep "\n" (shortcut: ''
+    ${concatStringsSep "|" shortcut.names})
+      base="${shortcut.destination}"
+      ;;
+  '') shortcuts;
+
+  shortcutUsage = concatMapStringsSep "\n" (shortcut: ''
+    printf '  %-24s %-28s %s\n' \
+      ${escapeShellArg (concatStringsSep ", " shortcut.names)} \
+      "${shortcut.destination}" \
+      ${escapeShellArg shortcut.description}
+  '') shortcuts;
+in
 pkgs.writeShellApplication {
   name = "goto";
-  runtimeInputs = [ pkgs.fd pkgs.fzf ];
   text = ''
-    set -euo pipefail
+        set -euo pipefail
 
-    query="''${1:-}"
-    case "$query" in
-      dl|downloads)
-        printf '%s\n' "$HOME/Downloads"
-        exit 0
-        ;;
-      docs)
-        printf '%s\n' "$HOME/Documents"
-        exit 0
-        ;;
-      dsktp|desk|desktop)
-        printf '%s\n' "$HOME/Desktop"
-        exit 0
-        ;;
-      repos)
-        printf '%s\n' "$HOME/Desktop/repos"
-        exit 0
-        ;;
-      cfg|config)
-        printf '%s\n' "''${XDG_CONFIG_HOME:-$HOME/.config}"
-        exit 0
-        ;;
-      home)
-        printf '%s\n' "$HOME"
-        exit 0
-        ;;
-    esac
+        usage() {
+          {
+            printf 'Usage: g <shortcut[/path]>\n'
+            printf '       g <directory>\n\n'
+            printf 'Shortcuts:\n'
+    ${shortcutUsage}
+          } >&2
+        }
 
-    roots="''${GOTO_ROOTS:-$HOME/src:$HOME/work:$HOME}"
+        if [ "$#" -eq 0 ]; then
+          usage
+          exit 0
+        fi
 
-    IFS=':' read -r -a root_array <<< "$roots"
+        if [ "$#" -ne 1 ]; then
+          printf 'goto: expected one path argument\n\n' >&2
+          usage
+          exit 2
+        fi
 
-    candidates=()
-    for root in "''${root_array[@]}"; do
-      [ -d "$root" ] || continue
-      while IFS= read -r path; do
-        candidates+=("$path")
-      done < <(fd --type d --max-depth 4 . "$root")
-    done
+        query="$1"
+        case "$query" in
+          -h|--help|help)
+            usage
+            exit 0
+            ;;
+        esac
 
-    if [ "''${#candidates[@]}" -eq 0 ]; then
-      echo "No directories found in GOTO_ROOTS" >&2
-      exit 1
-    fi
+        shortcut="''${query%%/*}"
+        base=""
+        case "$shortcut" in
+    ${shortcutCases}
+        esac
 
-    if [ -z "$query" ]; then
-      printf '%s\n' "''${candidates[@]}" | fzf
-      exit 0
-    fi
+        if [ -n "$base" ]; then
+          if [[ "$query" == */* ]]; then
+            target="$base/''${query#*/}"
+          else
+            target="$base"
+          fi
+        elif [ -d "$query" ]; then
+          target="$query"
+        else
+          printf "goto: unknown shortcut or directory: %s\n\n" "$query" >&2
+          usage
+          exit 1
+        fi
 
-    printf '%s\n' "''${candidates[@]}" | fzf --filter "$query" --select-1 --exit-0
+        if [ ! -d "$target" ]; then
+          printf "goto: directory does not exist: %s\n" "$target" >&2
+          exit 1
+        fi
+
+        printf '%s\n' "$target"
   '';
 }
