@@ -25,6 +25,7 @@
   nixpkgs.config.allowUnfree = true;
 
   programs.dconf.enable = true;
+  programs.nix-ld.enable = true;
   programs.zsh.enable = true;
 
   users.users.${username} = {
