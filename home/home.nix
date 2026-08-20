@@ -14,11 +14,13 @@
   home.username = username;
   home.homeDirectory = "/home/${username}";
   home.stateVersion = "25.11";
+  home.sessionVariables.PNPM_HOME = "/home/${username}/.local/share/pnpm";
   home.sessionPath = [
     "/run/current-system/sw/bin"
     "$HOME/.nix-profile/bin"
     "/etc/profiles/per-user/${username}/bin"
     "$HOME/.railway/bin"
+    "/home/${username}/.local/share/pnpm"
   ];
 
   home.packages = [
