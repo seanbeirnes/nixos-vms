@@ -76,10 +76,13 @@
     nodejs
     opencode
     pnpm
+    postgresql_18
     process-compose
+    python3
     ripgrep
     tmux
     tree-sitter
+    uv
     vscode
     zoxide
   ];
