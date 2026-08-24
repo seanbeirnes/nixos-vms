@@ -56,6 +56,7 @@
 
   environment.systemPackages = with pkgs; [
     bat
+    bun
     chromium
     eza
     fd
