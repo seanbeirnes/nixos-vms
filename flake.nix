@@ -21,7 +21,19 @@
         system = "aarch64-linux";
         specialArgs = {
           username = "devenv";
-          herdrPackage = herdr.packages.aarch64-linux.default;
+          herdrPackage = herdr.packages.aarch64-linux.default.overrideAttrs (_: {
+            cargoDeps = (pkgs.rustPlatform.importCargoLock.override {
+              # Bypass crates.io API download failures; retain Cargo.lock checksums.
+              fetchurl = args: pkgs.fetchurl (args // {
+                url = builtins.replaceStrings
+                  [ "https://crates.io/api/v1/crates/" ]
+                  [ "https://static.crates.io/crates/" ]
+                  args.url;
+              });
+            }) {
+              lockFile = "${herdr}/Cargo.lock";
+            };
+          });
         };
         modules = [
           home-manager.nixosModules.home-manager
