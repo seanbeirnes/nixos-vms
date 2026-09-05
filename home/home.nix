@@ -1,11 +1,11 @@
-{ pkgs, username, ... }: {
+{ pkgs, username, herdrPackage, ... }: {
   imports = [
     ./programs/git.nix
     ./programs/direnv.nix
     ./programs/zoxide.nix
     ./programs/starship.nix
     ./programs/zsh.nix
-    ./programs/tmux.nix
+    ./programs/herdr.nix
     ./programs/neovim.nix
     ./programs/ghostty.nix
     ./programs/gnome.nix
@@ -26,7 +26,7 @@
   home.packages = [
     (import ./scripts/goto.nix { inherit pkgs; })
     (import ./scripts/nvim-sync.nix { inherit pkgs; })
-    (import ./scripts/tnew.nix { inherit pkgs; })
+    (import ./scripts/hnew.nix { inherit pkgs herdrPackage; })
     (pkgs.writeShellApplication {
       name = "pbcopy";
       runtimeInputs = [ pkgs.wl-clipboard ];

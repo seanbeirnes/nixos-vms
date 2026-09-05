@@ -1,4 +1,4 @@
-{ pkgs, username, ... }: {
+{ pkgs, username, herdrPackage, ... }: {
   imports = [
     ./hardware-configuration.nix
   ];
@@ -80,7 +80,6 @@
     process-compose
     python3
     ripgrep
-    tmux
     tree-sitter
     uv
     vscode
@@ -90,7 +89,7 @@
   home-manager = {
     useGlobalPkgs = true;
     useUserPackages = true;
-    extraSpecialArgs = { inherit username; };
+    extraSpecialArgs = { inherit username herdrPackage; };
     users.${username} = import ../../home/home.nix;
   };
 

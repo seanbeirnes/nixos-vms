@@ -9,8 +9,6 @@
       ls = "eza";
       ll = "ls -lah";
       lg = "lazygit";
-      v = "nvim";
-      ta = "tmux attach -t main || tmux new -s main";
     };
 
     initContent = ''
