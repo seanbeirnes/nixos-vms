@@ -28,7 +28,7 @@ The `dev-vm` configuration includes:
 - OpenSSH
 - Nix flakes and `nix-command`
 - Home Manager
-- Zsh, Git, Neovim, tmux, direnv, zoxide, Starship, Ghostty, and common development CLI tools
+- Zsh, Git, Neovim, Herdr, direnv, zoxide, Starship, Ghostty, and common development CLI tools
 - Local DNS preference for `192.168.1.1`
 - Allow `8080` for testing apps on VM host
 - Disabled GNOME automatic screen blanking

@@ -3,6 +3,7 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+    herdr.url = "github:herdrdev/herdr/v0.8.2";
 
     home-manager = {
       url = "github:nix-community/home-manager/release-26.05";
@@ -11,7 +12,7 @@
   };
 
   outputs =
-    { nixpkgs, home-manager, ... }:
+    { nixpkgs, home-manager, herdr, ... }:
     let
       pkgs = nixpkgs.legacyPackages.aarch64-linux;
     in
@@ -20,6 +21,19 @@
         system = "aarch64-linux";
         specialArgs = {
           username = "devenv";
+          herdrPackage = herdr.packages.aarch64-linux.default.overrideAttrs (_: {
+            cargoDeps = (pkgs.rustPlatform.importCargoLock.override {
+              # Bypass crates.io API download failures; retain Cargo.lock checksums.
+              fetchurl = args: pkgs.fetchurl (args // {
+                url = builtins.replaceStrings
+                  [ "https://crates.io/api/v1/crates/" ]
+                  [ "https://static.crates.io/crates/" ]
+                  args.url;
+              });
+            }) {
+              lockFile = "${herdr}/Cargo.lock";
+            };
+          });
         };
         modules = [
           home-manager.nixosModules.home-manager
