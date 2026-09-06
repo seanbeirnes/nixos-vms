@@ -42,9 +42,15 @@ pkgs.writeShellApplication {
     workspace="$(jq -er '.result.workspace.workspace_id' <<< "$created")"
     tab="$(jq -er '.result.tab.tab_id' <<< "$created")"
     pane="$(jq -er '.result.root_pane.pane_id' <<< "$created")"
-    herdr --session "$session_name" tab rename "$tab" nvim >/dev/null
+    herdr --session "$session_name" tab rename "$tab" opencode >/dev/null
+    herdr --session "$session_name" pane run "$pane" "opencode" >/dev/null
+    created="$(herdr --session "$session_name" tab create --workspace "$workspace" --cwd "$PWD" --label neovim --no-focus)"
+    pane="$(jq -er '.result.root_pane.pane_id' <<< "$created")"
     herdr --session "$session_name" pane run "$pane" "nvim ." >/dev/null
     herdr --session "$session_name" tab create --workspace "$workspace" --cwd "$PWD" --label shell --no-focus >/dev/null
+    created="$(herdr --session "$session_name" tab create --workspace "$workspace" --cwd "$PWD" --label lazygit --no-focus)"
+    pane="$(jq -er '.result.root_pane.pane_id' <<< "$created")"
+    herdr --session "$session_name" pane run "$pane" "lazygit" >/dev/null
     exec herdr session attach "$session_name"
   '';
 }
