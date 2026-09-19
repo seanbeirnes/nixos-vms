@@ -4,6 +4,8 @@ pkgs.writeShellApplication {
   runtimeInputs = [
     herdrPackage
     pkgs.neovim
+    pkgs.opencode
+    pkgs.lazygit
     pkgs.coreutils
     pkgs.jq
   ];
@@ -18,9 +20,13 @@ pkgs.writeShellApplication {
     session_name="$(basename -- "$PWD")"
     sessions="$(herdr --session "$session_name" session list --json)"
 
-    # Include stopped sessions so their saved layout is restored, not duplicated.
     if jq -e --arg name "$session_name" 'any(.sessions[]; .name == $name)' <<< "$sessions" >/dev/null; then
-      exec herdr session attach "$session_name"
+      if jq -e --arg name "$session_name" 'any(.sessions[]; .name == $name and .running)' <<< "$sessions" >/dev/null; then
+        exec herdr session attach "$session_name"
+      fi
+
+      # Recreate stopped sessions so their programs are relaunched after reboot.
+      herdr session delete "$session_name" --json >/dev/null
     fi
 
     # CLI layout commands require a running server. Start without a seed workspace.
