@@ -1,4 +1,4 @@
-{ pkgs, username, herdrPackage, ... }: {
+{ pkgs, unstablePkgs, username, herdrPackage, ... }: {
   imports = [
     ./hardware-configuration.nix
   ];
@@ -84,7 +84,10 @@
     uv
     vscode
     zoxide
-  ];
+  ] ++ (with unstablePkgs; [
+    claude-code
+    pi-coding-agent
+  ]);
 
   home-manager = {
     useGlobalPkgs = true;

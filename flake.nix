@@ -3,6 +3,8 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+    # Coding agents release faster than the stable channel updates.
+    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     herdr.url = "github:herdrdev/herdr/v0.8.2";
 
     home-manager = {
@@ -12,7 +14,7 @@
   };
 
   outputs =
-    { nixpkgs, home-manager, herdr, ... }:
+    { nixpkgs, nixpkgs-unstable, home-manager, herdr, ... }:
     let
       pkgs = nixpkgs.legacyPackages.aarch64-linux;
     in
@@ -21,6 +23,10 @@
         system = "aarch64-linux";
         specialArgs = {
           username = "devenv";
+          unstablePkgs = import nixpkgs-unstable {
+            system = "aarch64-linux";
+            config.allowUnfree = true;
+          };
           herdrPackage = herdr.packages.aarch64-linux.default.overrideAttrs (_: {
             cargoDeps = (pkgs.rustPlatform.importCargoLock.override {
               # Bypass crates.io API download failures; retain Cargo.lock checksums.
