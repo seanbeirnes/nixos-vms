@@ -3,7 +3,7 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
-    # Coding agents release faster than the stable channel updates.
+    # Fast-moving tools (coding agents, Bun) release faster than the stable channel updates.
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     herdr.url = "github:herdrdev/herdr/v0.8.2";
 

@@ -29,7 +29,8 @@ The `dev-vm` configuration includes:
 - Nix flakes and `nix-command`
 - Home Manager
 - Zsh, Git, Neovim, Herdr, direnv, zoxide, Starship, Ghostty, and common development CLI tools
-- Coding agents: OpenCode, plus Claude Code and pi from `nixos-unstable`, since they release faster than the stable channel
+- Coding agents: OpenCode, Claude Code, and pi
+- Claude Code, pi, and Bun come from `nixos-unstable`, since they release faster than the stable channel
 - Local DNS preference for `192.168.1.1`
 - Allow `8080` for testing apps on VM host
 - Disabled GNOME automatic screen blanking

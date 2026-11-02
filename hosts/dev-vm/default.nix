@@ -56,7 +56,6 @@
 
   environment.systemPackages = with pkgs; [
     bat
-    bun
     chromium
     eza
     fd
@@ -85,6 +84,7 @@
     vscode
     zoxide
   ] ++ (with unstablePkgs; [
+    bun
     claude-code
     pi-coding-agent
   ]);
