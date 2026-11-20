@@ -26,6 +26,8 @@
       switch_workspace = "prefix+ctrl+1..9";
       # New is herdr's default prefix+shift+g; open lists `git worktree list`.
       open_worktree = "prefix+shift+o";
+      # Only removes checkouts herdr created, and confirms before deleting.
+      remove_worktree = "prefix+shift+k";
       rename_tab = "prefix+comma";
       detach = "prefix+d";
       reload_config = "prefix+r";
