@@ -15,10 +15,9 @@
   home.homeDirectory = "/home/${username}";
   home.stateVersion = "25.11";
   home.sessionVariables.PNPM_HOME = "/home/${username}/.local/share/pnpm";
+  # NixOS already provides the system and profile bin dirs. Prepending them here
+  # would shadow /run/wrappers/bin and break setuid programs like sudo.
   home.sessionPath = [
-    "/run/current-system/sw/bin"
-    "$HOME/.nix-profile/bin"
-    "/etc/profiles/per-user/${username}/bin"
     "$HOME/.railway/bin"
     "/home/${username}/.local/share/pnpm"
   ];
