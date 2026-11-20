@@ -21,6 +21,11 @@
       next_tab = "prefix+n";
       previous_tab = "prefix+p";
       switch_tab = "prefix+1..9";
+      # Each agent runs in its own workspace, so this switches agents and keeps
+      # prefix+1..9 for the agent │ neovim │ shell │ lazygit tabs.
+      switch_workspace = "prefix+ctrl+1..9";
+      # New is herdr's default prefix+shift+g; open lists `git worktree list`.
+      open_worktree = "prefix+shift+o";
       rename_tab = "prefix+comma";
       detach = "prefix+d";
       reload_config = "prefix+r";
