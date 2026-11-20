@@ -1,4 +1,4 @@
-{ pkgs, username, herdrPackage, ... }: {
+{ pkgs, unstablePkgs, username, herdrPackage, ... }: {
   imports = [
     ./hardware-configuration.nix
   ];
@@ -56,7 +56,6 @@
 
   environment.systemPackages = with pkgs; [
     bat
-    bun
     chromium
     eza
     fd
@@ -84,7 +83,11 @@
     uv
     vscode
     zoxide
-  ];
+  ] ++ (with unstablePkgs; [
+    bun
+    claude-code
+    pi-coding-agent
+  ]);
 
   home-manager = {
     useGlobalPkgs = true;
