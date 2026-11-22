@@ -99,6 +99,14 @@ DEV_VM_HOSTNAME=proxmox-dev-2 ./bin/apply-dev-vm
 
 To rename a VM later, edit `networking.hostName` in `hosts/dev-vm/local.nix` and apply again.
 
+VMs set up before per-VM hostnames were called `dev-vm`. To keep that name, set it on the first apply after updating, otherwise the VM is renamed to `dev-vm-<hypervisor>-<id>`:
+
+```sh
+DEV_VM_HOSTNAME=dev-vm ./bin/apply-dev-vm
+```
+
+A cloned VM keeps the original's `/etc/machine-id` and `local.nix`, and so its hostname too. In each clone, delete `hosts/dev-vm/local.nix` and either set `DEV_VM_HOSTNAME` or regenerate the machine ID before applying.
+
 If `systemd-detect-virt` reports a different hypervisor, or you want to force a configuration, set `DEV_VM_HOST`:
 
 ```sh
@@ -183,11 +191,11 @@ Apply the VM config:
 ./bin/apply-dev-vm
 ```
 
-Run a plain rebuild manually, naming the configuration for your hypervisor:
+Run a plain rebuild manually, naming the configuration for your hypervisor. The `path:` prefix makes Nix read the working tree directly: a plain `.#` reference only sees files tracked by git, which leaves out the ignored hardware config and `local.nix`.
 
 ```sh
-sudo nixos-rebuild switch --flake .#dev-vm-vmware
-sudo nixos-rebuild switch --flake .#dev-vm-proxmox
+sudo nixos-rebuild switch --flake "path:$PWD#dev-vm-vmware"
+sudo nixos-rebuild switch --flake "path:$PWD#dev-vm-proxmox"
 ```
 
 Check the configured resolver:
@@ -206,7 +214,7 @@ nixos-rebuild list-generations
 
 ### Missing Hardware Config
 
-If rebuilds fail because `./hardware-configuration.nix` cannot be found, copy the generated NixOS hardware config into the local ignored path:
+If rebuilds fail because `hosts/dev-vm/hardware-configuration.nix` cannot be found, copy the generated NixOS hardware config into the local ignored path:
 
 ```sh
 cp /etc/nixos/hardware-configuration.nix hosts/dev-vm/hardware-configuration.nix
@@ -223,10 +231,10 @@ Then rerun:
 If `sudo` reports that it must be owned by `uid 0` and have the setuid bit set, use the NixOS wrapper path:
 
 ```sh
-/run/wrappers/bin/sudo nixos-rebuild switch --flake .#dev-vm-vmware
+/run/wrappers/bin/sudo nixos-rebuild switch --flake "path:$PWD#dev-vm-vmware"
 ```
 
-On Proxmox, use `.#dev-vm-proxmox`.
+On Proxmox, use `#dev-vm-proxmox`.
 
 The apply script already prefers `/run/wrappers/bin/sudo` when it exists.
 
