@@ -141,8 +141,9 @@ Each VM runs a [T3 Code](https://github.com/pingdotgg/t3code) server, so the T3 
 What runs:
 
 - `t3 serve --port 3773 --lan` as the systemd user service `t3code`, for `devenv` only. Lingering is on for `devenv`, so the service starts at boot without a desktop login
-- The server sees the same `PATH` as a login shell, so it finds `claude`, `opencode`, `pi`, `git`, and `gh`. Sign in to each agent (and run `gh auth login`) on the VM once, as usual
-- Port `3773` is pinned and open in the firewall. Anyone on the LAN can reach it, so the one-time pairing link is what keeps other devices out
+- The server gets the system and user profiles on its `PATH`, plus your login shell's `PATH`, so it finds `claude`, `opencode`, `pi`, `git`, and `gh`. Sign in to each agent (and run `gh auth login`) on the VM once, as usual
+- Port `3773` is pinned and open in the firewall. Anyone on the LAN can reach it, so the one-time pairing link is what keeps other devices out. LAN traffic is plain HTTP, so it isn't encrypted; Tailscale HTTPS (below) is
+- A paired device can run agents and terminals as `devenv`, which can become root on the VM. Only pair devices you trust
 - The `t3` command is installed, for pairing and checks
 
 ### Pair The Mac Desktop App
@@ -180,21 +181,21 @@ Tailscale is off by default. To turn it on for one VM, add this to its `hosts/de
 
 ```nix
 {
-  networking.hostName = "dev-vm-proxmox-3f9a";
+  networking.hostName = "dev-vm-proxmox-3f9a"; # keep your existing line
   devVm.tailscale.enable = true;
 }
 ```
 
 Then:
 
-1. Apply the config with `./bin/apply-dev-vm`. This runs `tailscaled`, makes `devenv` a Tailscale operator (so it can run `tailscale serve` without `sudo`), and starts the T3 server with `--tailscale-serve`.
+1. Apply the config with `./bin/apply-dev-vm`. This runs `tailscaled`, makes `devenv` a Tailscale operator (so it can run `tailscale serve` without `sudo`), and sets the T3 server to start with `--tailscale-serve`. A running server picks that up at the restart in step 4.
 2. Log the VM in to your tailnet once:
 
    ```sh
-   sudo tailscale up
+   sudo tailscale up --operator=devenv
    ```
 
-   If it refuses because a setting isn't mentioned, run `sudo tailscale up --operator=devenv`.
+   Keep `--operator=devenv`: a plain `tailscale up` resets the operator, and the server then can't set up Tailscale HTTPS.
 
 3. In the [Tailscale admin console](https://login.tailscale.com/admin/dns), turn on **MagicDNS** and **HTTPS Certificates**.
 4. Restart the server, since it sets up Tailscale Serve only when it starts:
