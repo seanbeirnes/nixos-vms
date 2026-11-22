@@ -60,8 +60,10 @@
               runtimeInputs = with pkgs; [
                 coreutils
                 diffutils
+                gnugrep
                 gnutar
                 nixos-rebuild
+                systemd
               ];
               text = builtins.readFile ./bin/apply-dev-vm;
             }

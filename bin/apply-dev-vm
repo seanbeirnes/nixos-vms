@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-host="dev-vm"
 hardware_source="${HARDWARE_CONFIGURATION:-/etc/nixos/hardware-configuration.nix}"
 
 find_repo_root() {
@@ -24,8 +23,39 @@ find_repo_root() {
   return 1
 }
 
+# Prints the flake host for this VM: DEV_VM_HOST if set, otherwise the one for the detected hypervisor.
+detect_host() {
+  local virt
+
+  if [ -n "${DEV_VM_HOST:-}" ]; then
+    case "$DEV_VM_HOST" in
+      dev-vm-vmware | dev-vm-proxmox)
+        printf '%s\n' "$DEV_VM_HOST"
+        return 0
+        ;;
+    esac
+    echo "Unknown DEV_VM_HOST: $DEV_VM_HOST" >&2
+    echo "Use DEV_VM_HOST=dev-vm-vmware or DEV_VM_HOST=dev-vm-proxmox." >&2
+    return 1
+  fi
+
+  # systemd-detect-virt exits non-zero when it finds no hypervisor; the case below reports that.
+  virt="$(systemd-detect-virt || true)"
+  case "$virt" in
+    vmware) echo "dev-vm-vmware" ;;
+    kvm) echo "dev-vm-proxmox" ;;
+    *)
+      echo "Unsupported hypervisor from systemd-detect-virt: ${virt:-none}" >&2
+      echo "Set DEV_VM_HOST=dev-vm-vmware or DEV_VM_HOST=dev-vm-proxmox to choose a config." >&2
+      return 1
+      ;;
+  esac
+}
+
+host="$(detect_host)"
 repo_root="$(find_repo_root)"
-hardware_target="$repo_root/hosts/$host/hardware-configuration.nix"
+vm_dir="$repo_root/hosts/dev-vm"
+hardware_target="$vm_dir/hardware-configuration.nix"
 
 if [ ! -r "$hardware_source" ]; then
   echo "Cannot read hardware config: $hardware_source" >&2
@@ -33,7 +63,15 @@ if [ ! -r "$hardware_source" ]; then
   exit 1
 fi
 
-mkdir -p "$(dirname "$hardware_target")"
+# The flake takes each VM's CPU architecture from this setting rather than hard-coding one.
+if ! grep -Eq '^[[:space:]]*nixpkgs\.hostPlatform' "$hardware_source"; then
+  echo "$hardware_source does not set nixpkgs.hostPlatform." >&2
+  echo "Regenerate it with 'sudo nixos-generate-config', or add" >&2
+  echo "  nixpkgs.hostPlatform = lib.mkDefault \"x86_64-linux\";  (or \"aarch64-linux\")" >&2
+  exit 1
+fi
+
+mkdir -p "$vm_dir"
 
 if [ ! -f "$hardware_target" ] || ! cmp -s "$hardware_source" "$hardware_target"; then
   cp "$hardware_source" "$hardware_target"
