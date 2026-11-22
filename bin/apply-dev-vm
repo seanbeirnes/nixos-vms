@@ -11,7 +11,7 @@ find_repo_root() {
     [ -n "$candidate" ] || continue
 
     while [ "$candidate" != "/" ]; do
-      if [ -f "$candidate/flake.nix" ] && [ -f "$candidate/hosts/$host/default.nix" ]; then
+      if [ -f "$candidate/flake.nix" ] && [ -f "$candidate/hosts/common/default.nix" ]; then
         printf '%s\n' "$candidate"
         return 0
       fi

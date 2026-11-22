@@ -1,6 +1,7 @@
+# Configuration shared by every dev VM, whatever the hypervisor or CPU architecture.
 { pkgs, username, ... }: {
   imports = [
-    ./hardware-configuration.nix
+    ../dev-vm/hardware-configuration.nix
   ];
 
   boot.loader.systemd-boot.enable = true;
@@ -52,7 +53,6 @@
     enable = true;
     package = pkgs.docker_29;
   };
-  virtualisation.vmware.guest.enable = true;
 
   environment.systemPackages = with pkgs; [
     bat
