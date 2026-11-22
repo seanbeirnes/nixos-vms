@@ -58,6 +58,7 @@ The apply command:
 - Copies `/etc/nixos/hardware-configuration.nix` into `hosts/dev-vm/hardware-configuration.nix`
 - Keeps that generated hardware file local and untracked
 - Creates a temporary source tree that includes the ignored hardware file
+- Locks the flake inputs and copies `flake.lock` back to the repo, so it can be committed. Run `nix flake update` to move to newer inputs
 - Runs `nixos-rebuild switch --flake ...#dev-vm` through `sudo`
 
 The script appends any extra arguments to `nixos-rebuild`:

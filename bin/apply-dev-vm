@@ -58,6 +58,14 @@ mkdir -p "$tmp_source"
   tar -xf -
 )
 
+# Nix writes the lock into the temp copy, which is deleted on exit, so lock it
+# here and copy it back to the repo where it can be committed.
+nix --extra-experimental-features 'nix-command flakes' flake lock "$tmp_source"
+if ! cmp -s "$tmp_source/flake.lock" "$repo_root/flake.lock"; then
+  cp "$tmp_source/flake.lock" "$repo_root/flake.lock"
+  echo "Updated $repo_root/flake.lock; commit it to pin these inputs."
+fi
+
 echo "Applying NixOS configuration: $host"
 
 rebuild=(nixos-rebuild switch --flake "$tmp_source#$host")
