@@ -74,7 +74,6 @@
     just
     lazygit
     lua
-    neovim
     nodejs
     pnpm
     postgresql_18
@@ -84,7 +83,6 @@
     tree-sitter
     uv
     vscode
-    zoxide
   ] ++ (with pkgs.unstable; [
     bun
     claude-code
