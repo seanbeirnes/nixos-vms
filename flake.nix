@@ -21,28 +21,14 @@
     {
       nixosConfigurations.dev-vm = nixpkgs.lib.nixosSystem {
         system = "aarch64-linux";
-        specialArgs = {
-          username = "devenv";
-          unstablePkgs = import nixpkgs-unstable {
-            system = "aarch64-linux";
-            config.allowUnfree = true;
-          };
-          herdrPackage = herdr.packages.aarch64-linux.default.overrideAttrs (_: {
-            cargoDeps = (pkgs.rustPlatform.importCargoLock.override {
-              # Bypass crates.io API download failures; retain Cargo.lock checksums.
-              fetchurl = args: pkgs.fetchurl (args // {
-                url = builtins.replaceStrings
-                  [ "https://crates.io/api/v1/crates/" ]
-                  [ "https://static.crates.io/crates/" ]
-                  args.url;
-              });
-            }) {
-              lockFile = "${herdr}/Cargo.lock";
-            };
-          });
-        };
+        specialArgs.username = "devenv";
         modules = [
           home-manager.nixosModules.home-manager
+          {
+            nixpkgs.overlays = [
+              (import ./overlays { inherit nixpkgs-unstable; herdrFlake = herdr; })
+            ];
+          }
           ./hosts/dev-vm
         ];
       };

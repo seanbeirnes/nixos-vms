@@ -1,4 +1,4 @@
-{ pkgs, username, herdrPackage, ... }: {
+{ pkgs, username, ... }: {
   imports = [
     ./programs/git.nix
     ./programs/direnv.nix
@@ -25,7 +25,7 @@
   home.packages = [
     (import ./scripts/goto.nix { inherit pkgs; })
     (import ./scripts/nvim-sync.nix { inherit pkgs; })
-    (import ./scripts/hnew.nix { inherit pkgs herdrPackage; })
+    (import ./scripts/hnew.nix { inherit pkgs; })
     (pkgs.writeShellApplication {
       name = "pbcopy";
       runtimeInputs = [ pkgs.wl-clipboard ];

@@ -1,4 +1,4 @@
-{ pkgs, unstablePkgs, username, herdrPackage, ... }: {
+{ pkgs, username, ... }: {
   imports = [
     ./hardware-configuration.nix
   ];
@@ -83,7 +83,7 @@
     uv
     vscode
     zoxide
-  ] ++ (with unstablePkgs; [
+  ] ++ (with pkgs.unstable; [
     bun
     claude-code
     pi-coding-agent
@@ -92,7 +92,7 @@
   home-manager = {
     useGlobalPkgs = true;
     useUserPackages = true;
-    extraSpecialArgs = { inherit username herdrPackage; };
+    extraSpecialArgs = { inherit username; };
     users.${username} = import ../../home/home.nix;
   };
 
