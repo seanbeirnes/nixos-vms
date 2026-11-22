@@ -1,12 +1,16 @@
-{ pkgs, unstablePkgs, username, herdrPackage, ... }: {
+# Configuration shared by every dev VM, whatever the hypervisor or CPU architecture.
+{ lib, pkgs, username, ... }: {
   imports = [
-    ./hardware-configuration.nix
-  ];
+    ../dev-vm/hardware-configuration.nix
+  ]
+  # local.nix is gitignored, so it's invisible when evaluating straight from the git flake.
+  ++ lib.optional (builtins.pathExists ../dev-vm/local.nix) ../dev-vm/local.nix;
 
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
-  networking.hostName = "dev-vm";
+  # Each VM sets its own name in hosts/dev-vm/local.nix, so several can share a network.
+  networking.hostName = lib.mkDefault "dev-vm";
   networking.nameservers = [ "192.168.1.1" ];
   networking.networkmanager = {
     enable = true;
@@ -52,7 +56,6 @@
     enable = true;
     package = pkgs.docker_29;
   };
-  virtualisation.vmware.guest.enable = true;
 
   environment.systemPackages = with pkgs; [
     bat
@@ -71,9 +74,7 @@
     just
     lazygit
     lua
-    neovim
     nodejs
-    opencode
     pnpm
     postgresql_18
     process-compose
@@ -82,17 +83,17 @@
     tree-sitter
     uv
     vscode
-    zoxide
-  ] ++ (with unstablePkgs; [
+  ] ++ (with pkgs.unstable; [
     bun
     claude-code
+    opencode
     pi-coding-agent
   ]);
 
   home-manager = {
     useGlobalPkgs = true;
     useUserPackages = true;
-    extraSpecialArgs = { inherit username herdrPackage; };
+    extraSpecialArgs = { inherit username; };
     users.${username} = import ../../home/home.nix;
   };
 

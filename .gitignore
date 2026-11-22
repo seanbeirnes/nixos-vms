@@ -48,3 +48,6 @@ Temporary Items
 
 # Local machine-generated NixOS hardware config
 hosts/*/hardware-configuration.nix
+
+# Local per-VM settings, such as the hostname
+hosts/*/local.nix

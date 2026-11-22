@@ -1,10 +1,10 @@
-{ pkgs, herdrPackage }:
+{ pkgs }:
 pkgs.writeShellApplication {
   name = "hnew";
   runtimeInputs = [
-    herdrPackage
+    pkgs.unstable.herdr
     pkgs.neovim
-    pkgs.opencode
+    pkgs.unstable.opencode
     pkgs.lazygit
     pkgs.coreutils
     pkgs.jq
