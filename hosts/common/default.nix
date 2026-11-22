@@ -2,6 +2,7 @@
 { lib, pkgs, username, ... }: {
   imports = [
     ../dev-vm/hardware-configuration.nix
+    ./tailscale.nix
   ]
   # local.nix is gitignored, so it's invisible when evaluating straight from the git flake.
   ++ lib.optional (builtins.pathExists ../dev-vm/local.nix) ../dev-vm/local.nix;
