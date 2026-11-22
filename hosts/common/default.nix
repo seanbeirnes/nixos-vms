@@ -1,13 +1,16 @@
 # Configuration shared by every dev VM, whatever the hypervisor or CPU architecture.
-{ pkgs, username, ... }: {
+{ lib, pkgs, username, ... }: {
   imports = [
     ../dev-vm/hardware-configuration.nix
-  ];
+  ]
+  # local.nix is gitignored, so it's invisible when evaluating straight from the git flake.
+  ++ lib.optional (builtins.pathExists ../dev-vm/local.nix) ../dev-vm/local.nix;
 
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
-  networking.hostName = "dev-vm";
+  # Each VM sets its own name in hosts/dev-vm/local.nix, so several can share a network.
+  networking.hostName = lib.mkDefault "dev-vm";
   networking.nameservers = [ "192.168.1.1" ];
   networking.networkmanager = {
     enable = true;
