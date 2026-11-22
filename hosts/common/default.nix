@@ -76,7 +76,6 @@
     lua
     neovim
     nodejs
-    opencode
     pnpm
     postgresql_18
     process-compose
@@ -89,6 +88,7 @@
   ] ++ (with pkgs.unstable; [
     bun
     claude-code
+    opencode
     pi-coding-agent
   ]);
 

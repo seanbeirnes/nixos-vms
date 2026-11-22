@@ -4,7 +4,7 @@ pkgs.writeShellApplication {
   runtimeInputs = [
     pkgs.herdr
     pkgs.neovim
-    pkgs.opencode
+    pkgs.unstable.opencode
     pkgs.lazygit
     pkgs.coreutils
     pkgs.jq
