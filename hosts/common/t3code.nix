@@ -6,7 +6,8 @@ let
 
   t3code = pkgs.unstable.t3code.override { enableCodex = false; };
 
-  tailscaleServe = config.devVm.tailscale.enable;
+  # Whether this VM also serves T3 over Tailscale HTTPS (set per VM in local.nix).
+  tailscaleServeEnabled = config.devVm.tailscale.enable;
 
   # Waits for tailscaled at boot, since T3 sets up Tailscale Serve only when it starts and a user
   # unit can't order itself after the system's tailscaled.service. It stops waiting once Tailscale
@@ -50,8 +51,8 @@ in
   # Starts the dev user's systemd instance at boot, so the server runs without a desktop login.
   users.users.${username}.linger = true;
 
-  # A NixOS user unit rather than a Home Manager one: it lives in /etc with the policy and firewall rule,
-  # and switch-to-configuration honors restartIfChanged for it.
+  # A NixOS user unit rather than a Home Manager one, because switch-to-configuration honors
+  # restartIfChanged for it.
   systemd.user.services.t3code = {
     description = "T3 Code server";
     wantedBy = [ "default.target" ];
@@ -59,8 +60,9 @@ in
     unitConfig.ConditionUser = username;
     # Restarting the server ends every T3 terminal and agent turn, including one running this switch.
     restartIfChanged = false;
-    # Gives up after 5 quick failures, such as the port being taken, instead of retrying forever.
-    startLimitIntervalSec = 300;
+    # Gives up after 5 quick failures, such as the port being taken, instead of retrying forever. The
+    # window is longer with Tailscale, since each start can spend up to 80 seconds waiting for it.
+    startLimitIntervalSec = if tailscaleServeEnabled then 900 else 300;
     startLimitBurst = 5;
 
     # The default service PATH has only coreutils, grep, sed and systemd. Agents (claude, opencode, pi),
@@ -81,7 +83,7 @@ in
     serviceConfig = {
       Type = "simple";
       WorkingDirectory = "%h";
-      ExecStartPre = lib.mkIf tailscaleServe (lib.getExe waitForTailscale);
+      ExecStartPre = lib.mkIf tailscaleServeEnabled (lib.getExe waitForTailscale);
       ExecStart = lib.concatStringsSep " " (
         [
           "${t3code}/bin/t3"
@@ -90,7 +92,7 @@ in
           (toString port)
           "--lan"
         ]
-        ++ lib.optional tailscaleServe "--tailscale-serve"
+        ++ lib.optional tailscaleServeEnabled "--tailscale-serve"
       );
       Restart = "always";
       RestartSec = 5;
