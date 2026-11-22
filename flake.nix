@@ -3,9 +3,8 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
-    # Fast-moving tools (coding agents, Bun) release faster than the stable channel updates.
+    # Fast-moving tools (coding agents, Bun, Herdr) release faster than the stable channel updates.
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
-    herdr.url = "github:herdrdev/herdr/v0.8.2";
 
     home-manager = {
       url = "github:nix-community/home-manager/release-26.05";
@@ -14,7 +13,7 @@
   };
 
   outputs =
-    { nixpkgs, nixpkgs-unstable, home-manager, herdr, ... }:
+    { nixpkgs, nixpkgs-unstable, home-manager, ... }:
     let
       # Builds a per-system attribute set for every VM architecture, passing each system's pkgs to f.
       forEachSystem =
@@ -33,7 +32,7 @@
             home-manager.nixosModules.home-manager
             {
               nixpkgs.overlays = [
-                (import ./overlays { inherit nixpkgs-unstable; herdrFlake = herdr; })
+                (import ./overlays { inherit nixpkgs-unstable; })
               ];
             }
             ./hosts/common

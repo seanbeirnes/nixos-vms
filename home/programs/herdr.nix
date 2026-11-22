@@ -1,5 +1,5 @@
 { pkgs, ... }: {
-  home.packages = [ pkgs.herdr ];
+  home.packages = [ pkgs.unstable.herdr ];
 
   xdg.configFile."herdr/config.toml".source = (pkgs.formats.toml { }).generate "herdr-config.toml" {
     onboarding = false;

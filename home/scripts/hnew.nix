@@ -2,7 +2,7 @@
 pkgs.writeShellApplication {
   name = "hnew";
   runtimeInputs = [
-    pkgs.herdr
+    pkgs.unstable.herdr
     pkgs.neovim
     pkgs.unstable.opencode
     pkgs.lazygit
