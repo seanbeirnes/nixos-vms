@@ -1,29 +1,38 @@
 # NixOS VMs
 
-Standalone NixOS VM configurations for VMware Fusion on Apple Silicon Macs.
+Standalone NixOS VM configurations for VMware Fusion on Apple Silicon Macs and for Proxmox on x86_64 (AMD or Intel) servers.
 
 This repo is intended for disposable or semi-disposable development VMs where the VM provides the sandbox boundary and NixOS provides a reproducible operating-system configuration.
 
 ## Overview
 
-The primary host configuration is `dev-vm`.
+The flake has one host configuration per hypervisor. Both share the same system and user configuration:
 
-It targets:
+| Configuration | Hypervisor | Architecture |
+| --- | --- | --- |
+| `dev-vm-vmware` | VMware Fusion on Apple Silicon | `aarch64-linux` |
+| `dev-vm-proxmox` | Proxmox (QEMU/KVM) | `x86_64-linux` |
 
-- `aarch64-linux`
-- VMware Fusion
+`dev-vm` is kept as an alias of `dev-vm-vmware`, so older commands still work.
+
+The CPU architecture isn't set in the flake. Each VM's generated `hardware-configuration.nix` sets it through `nixpkgs.hostPlatform`, so the same configuration builds for whichever architecture the VM runs on.
+
+Every VM runs:
+
 - GNOME desktop
 - NixOS with flakes
 - Home Manager-managed user environment
+
+You can run several VMs on the same hypervisor. Each one gets its own hostname (see [Applying The Config](#applying-the-config)).
 
 The default user configured by this repo is `devenv`, with home directory `/home/devenv`.
 
 ## What It Configures
 
-The `dev-vm` configuration includes:
+Both configurations include:
 
 - GNOME desktop with GDM
-- VMware guest tools through `open-vm-tools`
+- Guest integration for the hypervisor: VMware guest tools through `open-vm-tools`, or the QEMU guest agent and SPICE agent on Proxmox
 - NetworkManager
 - OpenSSH
 - Nix flakes and `nix-command`
@@ -45,6 +54,25 @@ The `dev-vm` configuration includes:
 6. Clone this repo inside the VM.
 7. Apply the repo configuration.
 
+## Proxmox Setup
+
+1. Download the Graphical ISO image of NixOS, Intel/AMD 64-bit (`x86_64`), from <https://nixos.org/download/>, and upload it to an ISO storage on the Proxmox node.
+2. Create a VM with these settings (the rest can stay at their defaults):
+   - **OS**: the NixOS ISO, guest OS type **Linux**.
+   - **System**:
+     - **Machine**: `q35`.
+     - **BIOS**: **OVMF (UEFI)**. The config boots with systemd-boot, so SeaBIOS won't work.
+     - **Add EFI Disk**: ticked, with **Pre-Enroll keys** *unticked*. Pre-enrolled keys turn on Secure Boot, and the NixOS ISO then fails to boot with an "Access Denied" error.
+     - **Qemu Agent**: ticked. The `dev-vm-proxmox` config runs the agent inside the VM.
+     - **Graphic card**: **VirtIO-GPU**, or **SPICE** if you connect with a SPICE client (the config runs the SPICE agent for clipboard sharing and display resizing).
+     - **SCSI Controller**: **VirtIO SCSI single** or **VirtIO SCSI**.
+   - **Disks**: bus **SCSI**.
+   - **Network**: model **VirtIO (paravirtualized)**.
+3. Complete the graphical NixOS installation.
+4. Boot into the installed VM.
+5. Clone this repo inside the VM.
+6. Apply the repo configuration.
+
 ## Applying The Config
 
 From the repo root inside the VM, run:
@@ -55,11 +83,27 @@ From the repo root inside the VM, run:
 
 The apply command:
 
-- Copies `/etc/nixos/hardware-configuration.nix` into `hosts/dev-vm/hardware-configuration.nix`
-- Keeps that generated hardware file local and untracked
-- Creates a temporary source tree that includes the ignored hardware file
+- Picks the host configuration from `systemd-detect-virt`: `vmware` uses `dev-vm-vmware`, `kvm` uses `dev-vm-proxmox`
+- Copies `/etc/nixos/hardware-configuration.nix` into `hosts/dev-vm/hardware-configuration.nix`, and stops if that file doesn't set `nixpkgs.hostPlatform`
+- On the first run, creates `hosts/dev-vm/local.nix` with this VM's hostname. It never overwrites an existing `local.nix`
+- Keeps those per-VM files local and untracked
+- Creates a temporary source tree that includes the ignored per-VM files
 - Locks the flake inputs and copies `flake.lock` back to the repo, so it can be committed. Run `nix flake update` to move to newer inputs
-- Runs `nixos-rebuild switch --flake ...#dev-vm` through `sudo`
+- Runs `nixos-rebuild switch --flake ...#<host>` through `sudo`
+
+The default hostname is `dev-vm-<vmware|proxmox>-<first 4 characters of /etc/machine-id>`, for example `dev-vm-proxmox-3f9a`, so several VMs on one network get different names. To choose the name, set `DEV_VM_HOSTNAME` on the first run:
+
+```sh
+DEV_VM_HOSTNAME=proxmox-dev-2 ./bin/apply-dev-vm
+```
+
+To rename a VM later, edit `networking.hostName` in `hosts/dev-vm/local.nix` and apply again.
+
+If `systemd-detect-virt` reports a different hypervisor, or you want to force a configuration, set `DEV_VM_HOST`:
+
+```sh
+DEV_VM_HOST=dev-vm-proxmox ./bin/apply-dev-vm
+```
 
 The script appends any extra arguments to `nixos-rebuild`:
 
@@ -93,11 +137,13 @@ Other information can be found in [Railway's CLI docs](https://docs.railway.com/
 
 ## Local Hardware Config
 
-`hosts/dev-vm/hardware-configuration.nix` is intentionally ignored by git.
+`hosts/dev-vm/hardware-configuration.nix` and `hosts/dev-vm/local.nix` are intentionally ignored by git.
 
-That file is generated by NixOS and contains VM-specific hardware, disk, filesystem, and boot details. It should exist locally in each VM, but it should not be edited manually or committed unless you intentionally want to pin the repo to one specific VM disk layout.
+`hardware-configuration.nix` is generated by NixOS and contains VM-specific hardware, disk, filesystem, and boot details, including the CPU architecture (`nixpkgs.hostPlatform`). It should exist locally in each VM, but it should not be edited manually or committed unless you intentionally want to pin the repo to one specific VM disk layout.
 
-If needed, recreate it manually with:
+`local.nix` holds settings for one VM, such as its hostname. The apply script creates it on the first run, and you can edit it freely. If it's missing, the hostname falls back to `dev-vm`.
+
+If needed, recreate the hardware config manually with:
 
 ```sh
 cp /etc/nixos/hardware-configuration.nix hosts/dev-vm/hardware-configuration.nix
@@ -137,10 +183,11 @@ Apply the VM config:
 ./bin/apply-dev-vm
 ```
 
-Run a plain rebuild manually:
+Run a plain rebuild manually, naming the configuration for your hypervisor:
 
 ```sh
-sudo nixos-rebuild switch --flake .#dev-vm
+sudo nixos-rebuild switch --flake .#dev-vm-vmware
+sudo nixos-rebuild switch --flake .#dev-vm-proxmox
 ```
 
 Check the configured resolver:
@@ -176,14 +223,16 @@ Then rerun:
 If `sudo` reports that it must be owned by `uid 0` and have the setuid bit set, use the NixOS wrapper path:
 
 ```sh
-/run/wrappers/bin/sudo nixos-rebuild switch --flake .#dev-vm
+/run/wrappers/bin/sudo nixos-rebuild switch --flake .#dev-vm-vmware
 ```
+
+On Proxmox, use `.#dev-vm-proxmox`.
 
 The apply script already prefers `/run/wrappers/bin/sudo` when it exists.
 
 ### DNS Does Not Stick
 
-This config sets `192.168.1.1` through both `networking.nameservers` and NetworkManager's `insertNameservers` option. If `/etc/resolv.conf` still changes after reboot, inspect the active NetworkManager connection in the VM and check whether VMware DHCP is injecting different DNS settings.
+This config sets `192.168.1.1` through both `networking.nameservers` and NetworkManager's `insertNameservers` option. If `/etc/resolv.conf` still changes after reboot, inspect the active NetworkManager connection in the VM and check whether DHCP (VMware's network, or your LAN's DHCP server on Proxmox) is injecting different DNS settings.
 
 ### VMware Guest Integration
 
@@ -193,4 +242,19 @@ VMware guest tools are enabled through:
 virtualisation.vmware.guest.enable = true;
 ```
 
-This enables the open-source VMware guest integration used by NixOS.
+This enables the open-source VMware guest integration used by NixOS. It is set in `hosts/vmware/default.nix`.
+
+### Proxmox Guest Integration
+
+`hosts/proxmox/default.nix` enables the QEMU guest agent and the SPICE agent:
+
+```nix
+services.qemuGuest.enable = true;
+services.spice-vdagentd.enable = true;
+```
+
+The guest agent only works when **Qemu Agent** is ticked in the VM's Proxmox **Options**. If Proxmox reports that the agent isn't running, tick it, then shut the VM down and start it again (a reboot from inside the VM isn't enough).
+
+### NixOS ISO Fails With "Access Denied" On Proxmox
+
+Secure Boot is on because the EFI disk was created with **Pre-Enroll keys** ticked. With the VM stopped, remove the EFI disk under **Hardware** and add it again with **Pre-Enroll keys** unticked.
