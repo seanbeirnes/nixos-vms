@@ -53,9 +53,11 @@ detect_host() {
 }
 
 host="$(detect_host)"
+hypervisor="${host#dev-vm-}"
 repo_root="$(find_repo_root)"
 vm_dir="$repo_root/hosts/dev-vm"
 hardware_target="$vm_dir/hardware-configuration.nix"
+local_target="$vm_dir/local.nix"
 
 if [ ! -r "$hardware_source" ]; then
   echo "Cannot read hardware config: $hardware_source" >&2
@@ -78,6 +80,35 @@ if [ ! -f "$hardware_target" ] || ! cmp -s "$hardware_source" "$hardware_target"
   echo "Copied hardware config to $hardware_target"
 else
   echo "Hardware config is already up to date at $hardware_target"
+fi
+
+if [ -e "$local_target" ]; then
+  echo "Keeping existing per-VM settings at $local_target"
+  if [ -n "${DEV_VM_HOSTNAME:-}" ]; then
+    echo "Ignoring DEV_VM_HOSTNAME; edit networking.hostName in $local_target instead." >&2
+  fi
+else
+  if [ -n "${DEV_VM_HOSTNAME:-}" ]; then
+    vm_hostname="$DEV_VM_HOSTNAME"
+  else
+    machine_id="$(cat /etc/machine-id)"
+    vm_hostname="dev-vm-$hypervisor-${machine_id:0:4}"
+  fi
+
+  # Matches the DNS-label form NixOS accepts for networking.hostName.
+  if ! [[ "$vm_hostname" =~ ^[[:alnum:]]([[:alnum:]-]{0,61}[[:alnum:]])?$ ]]; then
+    echo "Invalid hostname: $vm_hostname" >&2
+    echo "Use letters, digits, and hyphens (max 63 characters), not starting or ending with a hyphen." >&2
+    exit 1
+  fi
+
+  cat >"$local_target" <<EOF
+# Settings for this VM only. Created by bin/apply-dev-vm and ignored by git.
+{
+  networking.hostName = "$vm_hostname";
+}
+EOF
+  echo "Created $local_target with hostname $vm_hostname"
 fi
 
 tmp_dir="$(mktemp -d)"
