@@ -25,7 +25,6 @@
     keybind = super+9=last_tab
 
     keybind = performable:ctrl+c=copy_to_clipboard
-    keybind = ctrl+v=paste_from_clipboard
     keybind = ctrl+arrow_left=esc:b
     keybind = ctrl+arrow_right=esc:f
     keybind = ctrl+backspace=text:\x17
