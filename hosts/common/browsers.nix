@@ -1,4 +1,4 @@
-# Browser automation for coding agents: agent-browser, Playwright MCP and CLI, and the libraries a project's own Playwright browsers need.
+# Browser automation for coding agents: agent-browser, Playwright CLI, and the libraries a project's own Playwright browsers need.
 { lib, pkgs, ... }:
 let
   # The Chromium that's already installed for people. The agent tools use it instead of downloading
@@ -21,8 +21,8 @@ let
   playwrightCliVersion = "0.1.25";
 
   # A `playwright-cli` command for the Playwright skill to call, since `npm install -g` (what the skill
-  # suggests) can't write to the Nix store. The executable path is set here, not globally, because
-  # PLAYWRIGHT_MCP_EXECUTABLE_PATH would also make playwright-mcp launch Chromium for --browser firefox.
+  # suggests) can't write to the Nix store. The executable path is set here, not globally, so a project's
+  # own Playwright MCP or CLI keeps choosing its browser.
   # The update notices (the CLI's and npm's) are off because they tell agents to run that same failing
   # `npm install -g`. Skipping the browser download stops `playwright-cli install` from fetching an unused
   # Ubuntu Chromium and pinning the project's config to it.
@@ -49,8 +49,6 @@ in
   environment.systemPackages = [
     agentBrowser
     playwrightCli
-    # Wrapped by nixpkgs to use its own Playwright browsers (Chromium, Firefox, WebKit) from the Nix store.
-    pkgs.unstable.playwright-mcp
   ];
 
   environment.sessionVariables = browserSessionVariables;
@@ -59,7 +57,7 @@ in
   # Lets the browsers a project downloads with `npx playwright install` run, so any Playwright version works.
   # Chromium and Firefox only: the libraries are Playwright's own Ubuntu 24.04 lists (nativeDeps.ts), minus
   # those nix-ld already provides. WebKit is left out: it needs old libraries (libvpx 1.12, libjxl 0.8) that
-  # nixpkgs builds only inside its own Playwright WebKit, and playwright-mcp already has that WebKit.
+  # nixpkgs builds only inside its own Playwright WebKit.
   programs.nix-ld.libraries = with pkgs; [
     # Chromium and Firefox
     alsa-lib
