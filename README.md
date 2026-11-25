@@ -56,7 +56,7 @@ Both configurations include:
    nix --extra-experimental-features 'nix-command flakes' run github:seanbeirnes/nixos-vms#bootstrap
    ```
 
-   Bootstrap clones this repo to `~/Desktop/repos/nixos-vms` (or updates the clone), runs [`./bin/apply-dev-vm`](#applying-the-config), runs [`sync-configs`](#common-commands), and prints the remaining steps with this VM's hostname filled in. It passes `DEV_VM_HOST`, `DEV_VM_HOSTNAME`, and any arguments after `--` on to `apply-dev-vm`:
+   Bootstrap clones this repo to `~/Desktop/repos/nixos-vms` (or updates the clone), runs [`./bin/apply-dev-vm`](#applying-the-config), runs [`sync-configs`](#common-commands), and prints this VM's hostname. It passes `DEV_VM_HOST`, `DEV_VM_HOSTNAME`, and any arguments after `--` on to `apply-dev-vm`:
 
    ```sh
    DEV_VM_HOSTNAME=proxmox-dev-2 nix --extra-experimental-features 'nix-command flakes' run github:seanbeirnes/nixos-vms#bootstrap -- --show-trace

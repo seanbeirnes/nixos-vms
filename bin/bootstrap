@@ -1,5 +1,5 @@
 # bootstrap: sets up a fresh dev VM. Clones this repo, applies the NixOS config, syncs the user
-# configs, and prints the steps left for a human. Runs as the flake app
+# configs, and points to the README for the steps left for a human. Runs as the flake app
 # `nix run github:seanbeirnes/nixos-vms#bootstrap`, which puts clone-or-pull and sync-configs on PATH.
 # Arguments go to bin/apply-dev-vm, and so to nixos-rebuild.
 
@@ -21,7 +21,7 @@ fi
 NIXOS_VMS_REPO="$repo_dir" "$repo_dir/bin/apply-dev-vm" "$@"
 
 # The VM is already switched by now, so a failed sync (say, DNS settling after the switch) still
-# ends with the steps below.
+# ends with the pointer below.
 sync_note=""
 if ! sync-configs; then
   sync_note="
@@ -30,29 +30,13 @@ fi
 
 # The switch writes the new name to /etc/hostname, but the running system keeps the old one until a reboot.
 vm_hostname="$(cat /etc/hostname 2>/dev/null || uname -n)"
-vm_user="$(id -un)"
 
+# The README is the one copy of the remaining steps, so this only says where to pick up.
 cat <<EOF
 
 Bootstrap finished. This VM is $vm_hostname.$sync_note
 
-What's left:
-
-1. Reboot (sudo reboot), so the VM takes the name $vm_hostname, your login shell
-   becomes zsh, and the T3 Code server starts.
-2. Pair T3 Code from your Mac: run 't3 pair' on this VM and add the printed link in the
-   desktop app (Settings -> Environments -> Add environment). Then sign in to
-   Claude Code: run 'claude' on this VM.
-3. Run 'gh auth login' on this VM yourself and sign in to a GitHub account. Choose SSH
-   and let it generate and upload a new key (a title like "$vm_hostname" helps you find
-   it later). If Tailscale is on for
-   this VM, also run 'sudo tailscale up --operator=$vm_user' yourself.
-4. Ask a T3 agent on $vm_hostname to finish up:
-   - trust GitHub's SSH host keys:
-       gh api meta --jq '.ssh_keys[] | "github.com " + .' >> ~/.ssh/known_hosts
-   - rerun 'sync-configs' (it links agents-private now)
-   - sign in to OpenCode, relaying the login code to you
-   Optional, from your Mac: ssh-copy-id $vm_user@$vm_hostname (or the VM's IP address)
-
-Details: https://github.com/seanbeirnes/nixos-vms#set-up-a-new-vm
+Next: reboot (sudo reboot), then continue at step 3 of "Set Up A New VM":
+  $repo_dir/README.md
+  $repo_url#set-up-a-new-vm
 EOF
