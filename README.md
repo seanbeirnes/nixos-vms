@@ -47,15 +47,44 @@ Both configurations include:
 - Optional Tailscale, turned on per VM (see [Tailscale HTTPS](#tailscale-https))
 - Disabled GNOME automatic screen blanking
 
+## Set Up A New VM
+
+1. Create the VM and install NixOS with the username `devenv`. See [VMware Fusion Setup](#vmware-fusion-setup) or [Proxmox Setup](#proxmox-setup).
+2. Log in at the VM's console and run the bootstrap command. Type your password when `sudo` asks for it:
+
+   ```sh
+   nix --extra-experimental-features 'nix-command flakes' run github:seanbeirnes/nixos-vms#bootstrap
+   ```
+
+   Bootstrap clones this repo to `~/Desktop/repos/nixos-vms` (or updates the clone), runs [`./bin/apply-dev-vm`](#applying-the-config), runs [`sync-configs`](#common-commands), and prints the steps below with this VM's hostname filled in. It passes `DEV_VM_HOST`, `DEV_VM_HOSTNAME`, and any arguments after `--` on to `apply-dev-vm`:
+
+   ```sh
+   DEV_VM_HOSTNAME=proxmox-dev-2 nix --extra-experimental-features 'nix-command flakes' run github:seanbeirnes/nixos-vms#bootstrap -- --show-trace
+   ```
+
+   When it finishes, reboot (`sudo reboot`), so the VM takes its new hostname, your login shell becomes zsh, and the T3 Code server starts.
+
+3. [Pair the T3 Code desktop app](#pair-the-mac-desktop-app) on your Mac with the VM, then sign in to Claude Code on the VM (run `claude`).
+4. Run `gh auth login` on the VM yourself. Choose SSH, and let it generate a new key and upload it to your GitHub account.
+5. A T3 agent on the VM can do the rest:
+   - Trust GitHub's SSH host keys. `gh auth login` doesn't add them to `~/.ssh/known_hosts`, and `sync-configs` won't answer an SSH prompt, so without this step it can't clone the private repo. `gh` fetches the keys over HTTPS:
+
+     ```sh
+     gh api meta --jq '.ssh_keys[] | "github.com " + .' >> ~/.ssh/known_hosts
+     ```
+
+   - Rerun `sync-configs`, which now also clones and links `agents-private`. If you gave the SSH key a passphrase, this step is skipped, since `sync-configs` can't ask for it.
+   - Start the other logins and relay their codes: OpenCode, and `sudo tailscale up --operator=devenv` if [Tailscale](#tailscale-https) is on.
+
+   Optional: run `ssh-copy-id devenv@<hostname>` from your Mac to log in over SSH.
+
 ## VMware Fusion Setup
 
 1. Download the Graphical ISO image of NixOS, 64-bit ARM, from <https://nixos.org/download/>.
 2. Choose the ISO when creating the VM in VMware Fusion.
 3. For **Select the operating system for this virtual machine**, select **Linux** -> **Other Linux 6.x kernel 64-bit Arm**.
-4. Complete the graphical NixOS installation.
-5. Boot into the installed VM.
-6. Clone this repo inside the VM.
-7. Apply the repo configuration.
+4. Complete the graphical NixOS installation, with the username `devenv`.
+5. Boot into the installed VM and continue at step 2 of [Set Up A New VM](#set-up-a-new-vm).
 
 ## Proxmox Setup
 
@@ -71,14 +100,12 @@ Both configurations include:
      - **SCSI Controller**: **VirtIO SCSI single** or **VirtIO SCSI**.
    - **Disks**: bus **SCSI**.
    - **Network**: model **VirtIO (paravirtualized)**.
-3. Complete the graphical NixOS installation.
-4. Boot into the installed VM.
-5. Clone this repo inside the VM.
-6. Apply the repo configuration.
+3. Complete the graphical NixOS installation, with the username `devenv`.
+4. Boot into the installed VM and continue at step 2 of [Set Up A New VM](#set-up-a-new-vm).
 
 ## Applying The Config
 
-From the repo root inside the VM, run:
+[Bootstrap](#set-up-a-new-vm) applies the config on a new VM. To apply it again, for example after changing it, run this from the repo root (`~/Desktop/repos/nixos-vms`) inside the VM:
 
 ```sh
 ./bin/apply-dev-vm
@@ -297,6 +324,12 @@ Run a plain rebuild manually, naming the configuration for your hypervisor. The 
 ```sh
 sudo nixos-rebuild switch --flake "path:$PWD#dev-vm-vmware"
 sudo nixos-rebuild switch --flake "path:$PWD#dev-vm-proxmox"
+```
+
+Update the Neovim config and the coding agent config (Claude Code and OpenCode instructions, skills, and settings) from their GitHub repos, `seanbeirnes/vim-config` and `seanbeirnes/agents`. It clones them into `~/.config/nvim` and `~/.config/agents` the first time, then runs the agents repo's `install.sh`. Safe to rerun:
+
+```sh
+sync-configs
 ```
 
 Check the configured resolver:
