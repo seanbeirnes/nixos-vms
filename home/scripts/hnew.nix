@@ -1,11 +1,10 @@
 { pkgs }:
 pkgs.writeShellApplication {
   name = "hnew";
+  # The Herdr server inherits this PATH and passes it to every pane, so list only what
+  # the script itself runs. Pane commands (opencode, nvim, lazygit) resolve in the pane's shell.
   runtimeInputs = [
     pkgs.unstable.herdr
-    pkgs.neovim
-    pkgs.unstable.opencode
-    pkgs.lazygit
     pkgs.coreutils
     pkgs.jq
   ];
