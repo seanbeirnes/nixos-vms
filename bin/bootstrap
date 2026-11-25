@@ -11,9 +11,22 @@ if [ "${EUID:-$(id -u)}" -eq 0 ]; then
   exit 1
 fi
 
-clone-or-pull "$repo_url" "$repo_dir"
-"$repo_dir/bin/apply-dev-vm" "$@"
-sync-configs
+# A rerun on a clone with local commits or a feature branch can't fast-forward; apply it as it is.
+if ! clone-or-pull "$repo_url" "$repo_dir"; then
+  [ -d "$repo_dir/.git" ] || exit 1
+  echo "Couldn't update $repo_dir; applying it as it is." >&2
+fi
+
+# Without NIXOS_VMS_REPO, apply-dev-vm would prefer a checkout containing the current directory.
+NIXOS_VMS_REPO="$repo_dir" "$repo_dir/bin/apply-dev-vm" "$@"
+
+# The VM is already switched by now, so a failed sync (say, DNS settling after the switch) still
+# ends with the steps below.
+sync_note=""
+if ! sync-configs; then
+  sync_note="
+sync-configs failed (see above). Run it again after the reboot."
+fi
 
 # The switch writes the new name to /etc/hostname, but the running system keeps the old one until a reboot.
 vm_hostname="$(cat /etc/hostname 2>/dev/null || uname -n)"
@@ -21,7 +34,9 @@ vm_user="$(id -un)"
 
 cat <<EOF
 
-Bootstrap finished. This VM is $vm_hostname. What's left:
+Bootstrap finished. This VM is $vm_hostname.$sync_note
+
+What's left:
 
 1. Reboot (sudo reboot), so the VM takes the name $vm_hostname, your login shell
    becomes zsh, and the T3 Code server starts.
