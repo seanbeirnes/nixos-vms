@@ -39,9 +39,12 @@ Both configurations include:
 - Home Manager
 - Zsh, Git, Neovim, Herdr, direnv, zoxide, Starship, Ghostty, and common development CLI tools
 - Coding agents: OpenCode, Claude Code, and pi
-- Claude Code, OpenCode, pi, Bun, and Herdr come from `nixos-unstable`, since they release faster than the stable channel
+- A [T3 Code server](#t3-code-server) for the `devenv` user, started at boot, with telemetry turned off
+- Claude Code, OpenCode, pi, Bun, Herdr, and T3 Code come from `nixos-unstable`, since they release faster than the stable channel
 - Local DNS preference for `192.168.1.1`
 - Allow `8080` for testing apps on VM host
+- Allow `3773` for the T3 Code server
+- Optional Tailscale, turned on per VM (see [Tailscale HTTPS](#tailscale-https))
 - Disabled GNOME automatic screen blanking
 
 ## VMware Fusion Setup
@@ -131,6 +134,104 @@ When using `nix run`, pass script arguments after `--`:
 nix run .#apply-dev-vm -- --show-trace
 ```
 
+## T3 Code Server
+
+Each VM runs a [T3 Code](https://github.com/pingdotgg/t3code) server, so the T3 Code desktop app on your Mac can run coding agents (Claude Code, OpenCode, pi) on the VM.
+
+What runs:
+
+- `t3 serve --port 3773 --lan` as the systemd user service `t3code`, for `devenv` only. Lingering is on for `devenv`, so the service starts at boot without a desktop login
+- The server gets the system and user profiles on its `PATH`, plus your login shell's `PATH`, so it finds `claude`, `opencode`, `pi`, `git`, and `gh`. Sign in to each agent (and run `gh auth login`) on the VM once, as usual
+- Port `3773` is pinned and open in the firewall. Anyone on the LAN can reach it, so the one-time pairing link is what keeps other devices out. LAN traffic is plain HTTP, so it isn't encrypted; Tailscale HTTPS (below) is
+- A paired device can run agents and terminals as `devenv`, which can become root on the VM. Only pair devices you trust
+- The `t3` command is installed, for pairing and checks
+
+### Pair The Mac Desktop App
+
+Keep the desktop app on your Mac at the same version as the server (`t3 --version` on the VM).
+
+1. On the VM, run:
+
+   ```sh
+   t3 pair
+   ```
+
+   It prints a one-time pairing link and a QR code.
+
+2. In the desktop app on the Mac, open **Settings → Environments → Add environment** and paste the link. You can also open the printed `t3code://pair` link on the Mac.
+
+Treat pairing links like passwords. Each link pairs one device; run `t3 pair` again for the next one.
+
+### Telemetry
+
+The server's telemetry is locked off:
+
+- `/etc/t3code/policy.json` is a [managed policy](https://github.com/pingdotgg/t3code/blob/v0.1.8/docs/user/managed-policy.md) with `"telemetry": false`. Settings shows the VM as managed by `nixos-vms`. The policy restricts nothing else: every provider and setting stays your choice
+- The service also sets `T3CODE_TELEMETRY_ENABLED=false` and `OTEL_SDK_DISABLED=true`
+
+This doesn't cover the clients:
+
+- The Mac desktop app reads `T3CODE_TELEMETRY_ENABLED` from your shell profile. Add `export T3CODE_TELEMETRY_ENABLED=false` to `~/.zshrc` on the Mac and restart the app
+- Browser and mobile clients (including app.t3.codes) still send their own relay connection traces; T3 Code has no setting to stop them
+- **Publish agent activity** (for mobile notifications) is a separate setting under **Settings → Sharing & access**
+
+### Tailscale HTTPS
+
+Tailscale is off by default. To turn it on for one VM, add this to its `hosts/dev-vm/local.nix`:
+
+```nix
+{
+  networking.hostName = "dev-vm-proxmox-3f9a"; # keep your existing line
+  devVm.tailscale.enable = true;
+}
+```
+
+Then:
+
+1. Apply the config with `./bin/apply-dev-vm`. This runs `tailscaled`, makes `devenv` a Tailscale operator (so it can run `tailscale serve` without `sudo`), and sets the T3 server to start with `--tailscale-serve`. A running server picks that up at the restart in step 4.
+2. Log the VM in to your tailnet once:
+
+   ```sh
+   sudo tailscale up --operator=devenv
+   ```
+
+   Keep `--operator=devenv`: a plain `tailscale up` resets the operator, and the server then can't set up Tailscale HTTPS.
+
+3. In the [Tailscale admin console](https://login.tailscale.com/admin/dns), turn on **MagicDNS** and **HTTPS Certificates**.
+4. Restart the server, since it sets up Tailscale Serve only when it starts:
+
+   ```sh
+   systemctl --user restart t3code
+   ```
+
+5. Pair over Tailscale. The link uses an address like `https://<hostname>.<tailnet>.ts.net/`:
+
+   ```sh
+   t3 pair --tailscale
+   ```
+
+At boot, the server waits up to about 80 seconds for Tailscale. If Tailscale is logged out or stopped, the server starts without Tailscale HTTPS and keeps serving the LAN.
+
+### Check The Server
+
+```sh
+systemctl --user status t3code
+journalctl --user -u t3code -e
+t3 policy show
+```
+
+`t3 policy show` should list the `nixos-vms` policy with telemetry off, and say the running server loaded it.
+
+Applying the config doesn't restart a running server, since that would end every T3 terminal and agent turn, including one running the apply. After an apply that updates T3 Code, the policy, or the Tailscale setting, restart it yourself:
+
+```sh
+systemctl --user restart t3code
+```
+
+If the service isn't running after the first apply, start it with `systemctl --user start t3code`, or reboot.
+
+The service stops retrying after 5 failed starts in 5 minutes, for example when another process holds port `3773`. Check the log, fix the cause, then run `systemctl --user reset-failed t3code` and start it again.
+
 ## Railway CLI Setup
 
 The Railway CLI is installed separately from NixOS so it can follow Railway's current releases instead of the version packaged in Nixpkgs. The Home Manager configuration includes `~/.railway/bin` in `PATH`.
@@ -149,7 +250,7 @@ Other information can be found in [Railway's CLI docs](https://docs.railway.com/
 
 `hardware-configuration.nix` is generated by NixOS and contains VM-specific hardware, disk, filesystem, and boot details, including the CPU architecture (`nixpkgs.hostPlatform`). It should exist locally in each VM, but it should not be edited manually or committed unless you intentionally want to pin the repo to one specific VM disk layout.
 
-`local.nix` holds settings for one VM, such as its hostname. The apply script creates it on the first run, and you can edit it freely. If it's missing, the hostname falls back to `dev-vm`.
+`local.nix` holds settings for one VM, such as its hostname and whether it runs [Tailscale](#tailscale-https). The apply script creates it on the first run, and you can edit it freely. If it's missing, the hostname falls back to `dev-vm`.
 
 If needed, recreate the hardware config manually with:
 
