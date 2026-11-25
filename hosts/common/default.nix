@@ -2,6 +2,7 @@
 { lib, pkgs, username, ... }: {
   imports = [
     ../dev-vm/hardware-configuration.nix
+    ./browsers.nix
     ./t3code.nix
     ./tailscale.nix
   ]

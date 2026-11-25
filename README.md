@@ -40,6 +40,7 @@ Both configurations include:
 - Zsh, Git, Neovim, Herdr, direnv, zoxide, Starship, Ghostty, and common development CLI tools
 - Coding agents: OpenCode, Claude Code, and pi
 - A [T3 Code server](#t3-code-server) for the `devenv` user, started at boot, with telemetry turned off
+- [Browser automation](#browser-automation) for coding agents: agent-browser and Playwright CLI, plus the libraries a project's own Playwright browsers need
 - Claude Code, OpenCode, pi, Bun, Herdr, and T3 Code come from `nixos-unstable`, since they release faster than the stable channel
 - Local DNS preference for `192.168.1.1`
 - Allow `8080` for testing apps on VM host
@@ -260,6 +261,41 @@ systemctl --user restart t3code
 If the service isn't running after the first apply, start it with `systemctl --user start t3code`, or reboot.
 
 The service stops retrying after 5 failed starts in 5 minutes, for example when another process holds port `3773`. Check the log, fix the cause, then run `systemctl --user reset-failed t3code` and start it again.
+
+## Browser Automation
+
+Coding agents on the VM can drive a browser with either of two tools. They're set up in `hosts/common/browsers.nix` and work the same from a terminal and from the T3 Code server.
+
+| Tool | Command | Browser it uses |
+| --- | --- | --- |
+| [agent-browser](https://agent-browser.dev/) (from `nixos-unstable`) | `agent-browser` | The installed Chromium |
+| [Playwright CLI](https://github.com/microsoft/playwright-cli) (`@playwright/cli` from npm) | `playwright-cli` | The installed Chromium |
+
+- **agent-browser**: agents can run `agent-browser --help` to learn it. For a richer skill, run `npx skills add vercel-labs/agent-browser` in a project. It finds the installed Chromium on `PATH`. Skip `agent-browser install`: it downloads its own Chrome, which agent-browser would then prefer over the installed Chromium. To try another browser, pass `--executable-path` or set `AGENT_BROWSER_EXECUTABLE_PATH`.
+- **Playwright CLI**: `playwright-cli` runs a pinned version of `@playwright/cli` through `npx`, which downloads it on the first run. To change the version, edit `playwrightCliVersion` in `hosts/common/browsers.nix`. It always launches the installed Chromium, so `--browser firefox` or `webkit` won't work. Run `playwright-cli install --skills` in a project to add its skill. Don't follow the skill's advice to run `npm install -g @playwright/cli`: on NixOS, `npm install -g` fails because it can't write to the Nix store.
+
+### Playwright In Your Own Projects
+
+A project's own Playwright (`@playwright/test`, or `npx playwright cli`) uses the browsers it downloads itself:
+
+```sh
+npx playwright install chromium firefox
+```
+
+Those browsers are built for Ubuntu. They run on the VM because [nix-ld](https://github.com/nix-community/nix-ld) provides the shared libraries that Playwright lists for Chromium and Firefox on Ubuntu 24.04, so any Playwright version works. `PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS=1` is set for login shells and the T3 Code server, since Playwright's own library check can't see the nix-ld libraries and would stop the browser from starting.
+
+- WebKit isn't covered: it needs library versions that nixpkgs doesn't ship
+- `npx playwright cli` (the project's copy of Playwright CLI) defaults to Google Chrome, which isn't installed. Pass `--browser chromium` to use the Chromium the project downloaded
+- Don't run `npx playwright install-deps`. It installs Ubuntu packages with `apt`, which NixOS doesn't have
+
+### Check The Browser Tools
+
+After an apply, open a new terminal and restart the T3 Code server (`systemctl --user restart t3code`) so both pick up the new settings. Then:
+
+```sh
+agent-browser open https://example.com && agent-browser get title && agent-browser close
+playwright-cli open https://example.com && playwright-cli snapshot && playwright-cli close
+```
 
 ## Railway CLI Setup
 
