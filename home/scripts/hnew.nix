@@ -1,11 +1,11 @@
 { pkgs }:
 pkgs.writeShellApplication {
   name = "hnew";
+  # The Herdr server inherits this PATH, with these inputs in front, and passes it to every pane. So list
+  # only what the script itself runs, which are the same packages as on the user's PATH. Pane commands
+  # (opencode, nvim, lazygit) then resolve to the user's own.
   runtimeInputs = [
     pkgs.unstable.herdr
-    pkgs.neovim
-    pkgs.unstable.opencode
-    pkgs.lazygit
     pkgs.coreutils
     pkgs.jq
   ];

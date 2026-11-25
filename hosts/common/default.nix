@@ -34,6 +34,9 @@
   programs.dconf.enable = true;
   programs.nix-ld.enable = true;
   programs.zsh.enable = true;
+  # Home Manager's ~/.zshrc already runs compinit, so a second run from /etc/zshrc only slows
+  # startup. enableCompletion stays on for the system completion fpath and /share/zsh links.
+  programs.zsh.enableGlobalCompInit = false;
 
   users.users.${username} = {
     isNormalUser = true;

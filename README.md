@@ -348,6 +348,7 @@ Recommended host-side mappings:
 Be careful with global copy/paste remaps:
 
 - `Cmd+C` -> `Ctrl+C` works as copy in many GUI apps, but `Ctrl+C` interrupts running processes in terminals.
+- In Ghostty, `Ctrl+C` copies only when text is selected, and pasting is `Ctrl+Shift+V`. Plain `Ctrl+V` goes to the program in the terminal, such as Neovim's visual-block mode.
 
 ## Common Commands
 
