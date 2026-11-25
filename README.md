@@ -65,7 +65,7 @@ Both configurations include:
    When it finishes, reboot (`sudo reboot`), so the VM takes its new hostname, your login shell becomes zsh, and the T3 Code server starts.
 
 3. [Pair the T3 Code desktop app](#pair-the-mac-desktop-app) on your Mac with the VM, then sign in to Claude Code on the VM (run `claude`).
-4. Run `gh auth login` on the VM yourself. Choose SSH, and let it generate a new key and upload it to your GitHub account. If [Tailscale](#tailscale-https) is on for this VM, also run `sudo tailscale up --operator=devenv` yourself, since an agent can't type the `sudo` password.
+4. Run `gh auth login` on the VM yourself and sign in to a GitHub account. Choose SSH, and let it generate a new key and upload it to that account. If [Tailscale](#tailscale-https) is on for this VM, also run `sudo tailscale up --operator=devenv` yourself, since an agent can't type the `sudo` password.
 5. A T3 agent on the VM can do the rest:
    - Trust GitHub's SSH host keys. `gh auth login` doesn't add them to `~/.ssh/known_hosts`, and `sync-configs` won't answer an SSH prompt, so without this step it can't clone the private repo. `gh` fetches the keys over HTTPS:
 

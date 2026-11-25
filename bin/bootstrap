@@ -43,8 +43,9 @@ What's left:
 2. Pair T3 Code from your Mac: run 't3 pair' on this VM and add the printed link in the
    desktop app (Settings -> Environments -> Add environment). Then sign in to
    Claude Code: run 'claude' on this VM.
-3. Run 'gh auth login' on this VM yourself. Choose SSH and let it generate and upload a
-   new key (a title like "$vm_hostname" helps you find it later). If Tailscale is on for
+3. Run 'gh auth login' on this VM yourself and sign in to a GitHub account. Choose SSH
+   and let it generate and upload a new key (a title like "$vm_hostname" helps you find
+   it later). If Tailscale is on for
    this VM, also run 'sudo tailscale up --operator=$vm_user' yourself.
 4. Ask a T3 agent on $vm_hostname to finish up:
    - trust GitHub's SSH host keys:
