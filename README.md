@@ -56,7 +56,7 @@ Both configurations include:
    nix --extra-experimental-features 'nix-command flakes' run github:seanbeirnes/nixos-vms#bootstrap
    ```
 
-   Bootstrap clones this repo to `~/Desktop/repos/nixos-vms` (or updates the clone), runs [`./bin/apply-dev-vm`](#applying-the-config), runs [`sync-configs`](#common-commands), and prints the steps below with this VM's hostname filled in. It passes `DEV_VM_HOST`, `DEV_VM_HOSTNAME`, and any arguments after `--` on to `apply-dev-vm`:
+   Bootstrap clones this repo to `~/Desktop/repos/nixos-vms` (or updates the clone), runs [`./bin/apply-dev-vm`](#applying-the-config), runs [`sync-configs`](#common-commands), and prints the remaining steps with this VM's hostname filled in. It passes `DEV_VM_HOST`, `DEV_VM_HOSTNAME`, and any arguments after `--` on to `apply-dev-vm`:
 
    ```sh
    DEV_VM_HOSTNAME=proxmox-dev-2 nix --extra-experimental-features 'nix-command flakes' run github:seanbeirnes/nixos-vms#bootstrap -- --show-trace
@@ -65,7 +65,7 @@ Both configurations include:
    When it finishes, reboot (`sudo reboot`), so the VM takes its new hostname, your login shell becomes zsh, and the T3 Code server starts.
 
 3. [Pair the T3 Code desktop app](#pair-the-mac-desktop-app) on your Mac with the VM, then sign in to Claude Code on the VM (run `claude`).
-4. Run `gh auth login` on the VM yourself. Choose SSH, and let it generate a new key and upload it to your GitHub account.
+4. Run `gh auth login` on the VM yourself. Choose SSH, and let it generate a new key and upload it to your GitHub account. If [Tailscale](#tailscale-https) is on for this VM, also run `sudo tailscale up --operator=devenv` yourself, since an agent can't type the `sudo` password.
 5. A T3 agent on the VM can do the rest:
    - Trust GitHub's SSH host keys. `gh auth login` doesn't add them to `~/.ssh/known_hosts`, and `sync-configs` won't answer an SSH prompt, so without this step it can't clone the private repo. `gh` fetches the keys over HTTPS:
 
@@ -74,9 +74,11 @@ Both configurations include:
      ```
 
    - Rerun `sync-configs`, which now also clones and links `agents-private`. If you gave the SSH key a passphrase, this step is skipped, since `sync-configs` can't ask for it.
-   - Start the other logins and relay their codes: OpenCode, and `sudo tailscale up --operator=devenv` if [Tailscale](#tailscale-https) is on.
+   - Start the other logins and relay their codes, such as OpenCode's.
 
-   Optional: run `ssh-copy-id devenv@<hostname>` from your Mac to log in over SSH.
+   Optional: run `ssh-copy-id devenv@<hostname>` from your Mac to log in over SSH. Use the VM's IP address if your Mac can't resolve its hostname.
+
+Bootstrap uses the checkout at `~/Desktop/repos/nixos-vms`. On an older VM whose checkout is somewhere else, keep applying from that checkout with `./bin/apply-dev-vm`, since a fresh clone wouldn't have the VM's `hosts/dev-vm/local.nix` (its hostname and Tailscale setting).
 
 ## VMware Fusion Setup
 

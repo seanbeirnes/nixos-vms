@@ -44,14 +44,14 @@ What's left:
    desktop app (Settings -> Environments -> Add environment). Then sign in to
    Claude Code: run 'claude' on this VM.
 3. Run 'gh auth login' on this VM yourself. Choose SSH and let it generate and upload a
-   new key (a title like "$vm_hostname" helps you find it later).
+   new key (a title like "$vm_hostname" helps you find it later). If Tailscale is on for
+   this VM, also run 'sudo tailscale up --operator=$vm_user' yourself.
 4. Ask a T3 agent on $vm_hostname to finish up:
    - trust GitHub's SSH host keys:
        gh api meta --jq '.ssh_keys[] | "github.com " + .' >> ~/.ssh/known_hosts
    - rerun 'sync-configs' (it links agents-private now)
-   - sign in to OpenCode, and run 'sudo tailscale up --operator=$vm_user' if Tailscale is
-     on, relaying the login codes to you
-   Optional, from your Mac: ssh-copy-id $vm_user@$vm_hostname
+   - sign in to OpenCode, relaying the login code to you
+   Optional, from your Mac: ssh-copy-id $vm_user@$vm_hostname (or the VM's IP address)
 
 Details: https://github.com/seanbeirnes/nixos-vms#set-up-a-new-vm
 EOF
