@@ -3,7 +3,6 @@
 pkgs.writeShellApplication {
   name = "sync-configs";
   runtimeInputs = [
-    (import ./nvim-sync.nix { inherit pkgs; })
     (import ./clone-or-pull.nix { inherit pkgs; })
     # The agents repo's install.sh needs jq, and git and ssh to clone agents-private.
     pkgs.git
@@ -20,9 +19,11 @@ pkgs.writeShellApplication {
     # Each step runs even if an earlier one failed, so one diverged repo doesn't block the others.
     failed=0
 
-    nvim-sync || failed=1
+    config_dir="''${XDG_CONFIG_HOME:-$HOME/.config}"
 
-    agents_dir="''${XDG_CONFIG_HOME:-$HOME/.config}/agents"
+    clone-or-pull https://github.com/seanbeirnes/vim-config "$config_dir/nvim" || failed=1
+
+    agents_dir="$config_dir/agents"
     clone-or-pull https://github.com/seanbeirnes/agents "$agents_dir" || failed=1
     # Installs from the existing checkout even when only its update failed.
     if [ -x "$agents_dir/install.sh" ]; then
