@@ -271,7 +271,7 @@ Coding agents on the VM can drive a browser with either of two tools. They're se
 | [agent-browser](https://agent-browser.dev/) (from `nixos-unstable`) | `agent-browser` | The installed Chromium |
 | [Playwright CLI](https://github.com/microsoft/playwright-cli) (`@playwright/cli` from npm) | `playwright-cli` | The installed Chromium |
 
-- **agent-browser**: agents can run `agent-browser --help` to learn it. For a richer skill, run `npx skills add vercel-labs/agent-browser` in a project. The command always uses the installed Chromium, so skip `agent-browser install`. To try another browser, pass `--executable-path` or set `AGENT_BROWSER_EXECUTABLE_PATH`.
+- **agent-browser**: agents can run `agent-browser --help` to learn it. For a richer skill, run `npx skills add vercel-labs/agent-browser` in a project. It finds the installed Chromium on `PATH`. Skip `agent-browser install`: it downloads a Chrome built for Ubuntu, which agent-browser would then prefer. To try another browser, pass `--executable-path` or set `AGENT_BROWSER_EXECUTABLE_PATH`.
 - **Playwright CLI**: `playwright-cli` runs a pinned version of `@playwright/cli` through `npx`, which downloads it on the first run. To change the version, edit `playwrightCliVersion` in `hosts/common/browsers.nix`. It always launches the installed Chromium, so `--browser firefox` or `webkit` won't work. Run `playwright-cli install --skills` in a project to add its skill. Don't follow the skill's advice to run `npm install -g @playwright/cli`: on NixOS, `npm install -g` fails because it can't write to the Nix store.
 
 ### Playwright In Your Own Projects

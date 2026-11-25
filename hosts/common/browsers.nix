@@ -1,21 +1,9 @@
 # Browser automation for coding agents: agent-browser, Playwright CLI, and the libraries a project's own Playwright browsers need.
 { lib, pkgs, ... }:
 let
-  # The Chromium that's already installed for people. The agent tools use it instead of downloading
-  # their own browser, which is built for Ubuntu.
+  # The Chromium that's already installed for people. playwright-cli uses it instead of downloading its own
+  # browser, which is built for Ubuntu. agent-browser finds it on PATH by itself.
   chromiumExecutable = lib.getExe pkgs.chromium;
-
-  # Baked into the binary rather than set in the environment, so agents started from a login shell, the
-  # T3 Code service, or anywhere else get the same browser. --set-default keeps an explicit value working.
-  agentBrowser = pkgs.symlinkJoin {
-    name = "agent-browser-${pkgs.unstable.agent-browser.version}";
-    paths = [ pkgs.unstable.agent-browser ];
-    nativeBuildInputs = [ pkgs.makeWrapper ];
-    postBuild = ''
-      wrapProgram $out/bin/agent-browser \
-        --set-default AGENT_BROWSER_EXECUTABLE_PATH ${chromiumExecutable}
-    '';
-  };
 
   # @playwright/cli is only on npm. Pinned so every VM runs the same version; bump it here.
   playwrightCliVersion = "0.1.25";
@@ -47,7 +35,7 @@ let
 in
 {
   environment.systemPackages = [
-    agentBrowser
+    pkgs.unstable.agent-browser
     playwrightCli
   ];
 
