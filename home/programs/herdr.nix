@@ -21,7 +21,7 @@
       next_tab = "prefix+n";
       previous_tab = "prefix+p";
       switch_tab = "prefix+1..9";
-      switch_workspace = "prefix+ctrl+1..9";
+      focus_agent = "prefix+ctrl+1..9";
       open_worktree = "prefix+shift+o";
       remove_worktree = "prefix+shift+k";
       rename_tab = "prefix+comma";
