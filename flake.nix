@@ -68,6 +68,21 @@
             }
           }/bin/apply-dev-vm";
         };
+
+        # A fresh NixOS has no git and flakes turned off, so this is the one command to type on a new VM.
+        bootstrap = {
+          type = "app";
+          program = "${
+            pkgs.writeShellApplication {
+              name = "bootstrap";
+              runtimeInputs = [
+                (import ./home/scripts/clone-or-pull.nix { inherit pkgs; })
+                (import ./home/scripts/sync-configs.nix { inherit pkgs; })
+              ];
+              text = builtins.readFile ./bin/bootstrap;
+            }
+          }/bin/bootstrap";
+        };
       });
 
       formatter = forEachSystem (pkgs: pkgs.nixfmt);
