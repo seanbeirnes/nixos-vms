@@ -23,13 +23,17 @@ let
   # A `playwright-cli` command for the Playwright skill to call, since `npm install -g` (what the skill
   # suggests) can't write to the Nix store. The executable path is set here, not globally, because
   # PLAYWRIGHT_MCP_EXECUTABLE_PATH would also make playwright-mcp launch Chromium for --browser firefox.
-  # The update notice is off because it tells agents to run that same failing `npm install -g`.
+  # The update notices (the CLI's and npm's) are off because they tell agents to run that same failing
+  # `npm install -g`. Skipping the browser download stops `playwright-cli install` from fetching an unused
+  # Ubuntu Chromium and pinning the project's config to it.
   playwrightCli = pkgs.writeShellApplication {
     name = "playwright-cli";
     runtimeInputs = [ pkgs.nodejs ];
     text = ''
       export PLAYWRIGHT_MCP_EXECUTABLE_PATH="''${PLAYWRIGHT_MCP_EXECUTABLE_PATH:-${chromiumExecutable}}"
+      export PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD="''${PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD:-1}"
       export NO_UPDATE_NOTIFIER=1
+      export NPM_CONFIG_UPDATE_NOTIFIER=false
       exec npx --yes --package=@playwright/cli@${playwrightCliVersion} -- playwright-cli "$@"
     '';
   };
