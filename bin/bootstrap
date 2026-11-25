@@ -1,0 +1,42 @@
+# bootstrap: sets up a fresh dev VM. Clones this repo, applies the NixOS config, syncs the user
+# configs, and points to the README for the steps left for a human. Runs as the flake app
+# `nix run github:seanbeirnes/nixos-vms#bootstrap`, which puts clone-or-pull and sync-configs on PATH.
+# Arguments go to bin/apply-dev-vm, and so to nixos-rebuild.
+
+repo_url="https://github.com/seanbeirnes/nixos-vms"
+repo_dir="$HOME/Desktop/repos/nixos-vms"
+
+if [ "${EUID:-$(id -u)}" -eq 0 ]; then
+  echo "Run bootstrap as your normal user, not root. It asks for the sudo password when it applies the config." >&2
+  exit 1
+fi
+
+# A rerun on a clone with local commits or a feature branch can't fast-forward; apply it as it is.
+if ! clone-or-pull "$repo_url" "$repo_dir"; then
+  [ -d "$repo_dir/.git" ] || exit 1
+  echo "Couldn't update $repo_dir; applying it as it is." >&2
+fi
+
+# Without NIXOS_VMS_REPO, apply-dev-vm would prefer a checkout containing the current directory.
+NIXOS_VMS_REPO="$repo_dir" "$repo_dir/bin/apply-dev-vm" "$@"
+
+# The VM is already switched by now, so a failed sync (say, DNS settling after the switch) still
+# ends with the pointer below.
+sync_note=""
+if ! sync-configs; then
+  sync_note="
+sync-configs failed (see above). Run it again after the reboot."
+fi
+
+# The switch writes the new name to /etc/hostname, but the running system keeps the old one until a reboot.
+vm_hostname="$(cat /etc/hostname 2>/dev/null || uname -n)"
+
+# The README is the one copy of the remaining steps, so this only says where to pick up.
+cat <<EOF
+
+Bootstrap finished. This VM is $vm_hostname.$sync_note
+
+Next: reboot (sudo reboot), then continue at step 3 of "Set Up A New VM":
+  $repo_dir/README.md
+  $repo_url#set-up-a-new-vm
+EOF
