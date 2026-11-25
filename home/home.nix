@@ -25,6 +25,7 @@
   home.packages = [
     (import ./scripts/goto.nix { inherit pkgs; })
     (import ./scripts/nvim-sync.nix { inherit pkgs; })
+    (import ./scripts/sync-configs.nix { inherit pkgs; })
     (import ./scripts/hnew.nix { inherit pkgs; })
     (pkgs.writeShellApplication {
       name = "pbcopy";
